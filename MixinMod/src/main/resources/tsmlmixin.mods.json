@@ -1,0 +1,7 @@
+{
+  "id": "tsmlmixin",
+  "version": "${version}",
+  "name": "TSMLMixinMod",
+  "description": "Mixin mod for TriviaSpireModLoader.",
+  "entrypoint": "org.mangorage.tsmlmixin.mod.TSMLMixinMod"
+}

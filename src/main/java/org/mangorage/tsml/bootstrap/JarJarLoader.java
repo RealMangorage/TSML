@@ -1,9 +1,17 @@
-package org.mangorage.tsml.internal.core;
+package org.mangorage.tsml.bootstrap;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.jar.JarEntry;
@@ -12,14 +20,15 @@ import java.util.jar.JarFile;
 public final class JarJarLoader {
 
     /**
-     * For each jar in `fatJars`, reads JarJar/output.txt and extracts the listed jars into `extractToFolder`.
+     * For each jar in `fatJars`, reads {folderInJar}/output.txt and extracts the listed jars into `extractToFolder`.
      *
-     * @param fatJars         list of URLs pointing to jars that contain JarJar/output.txt
+     * @param fatJars       list of URLs pointing to jars that contain the folder with output.txt
      * @param extractToFolder folder to extract jars into
+     * @param folderInJar     folder inside the fat jar where output.txt and jars reside
      * @return list of URLs pointing to the extracted jars on disk
      * @throws IOException on IO errors
      */
-    public static List<URL> extractJarsFromFatJars(List<URL> fatJars, Path extractToFolder) throws IOException, URISyntaxException {
+    public static List<URL> extractJarsFromFatJars(List<URL> fatJars, Path extractToFolder, String folderInJar) throws IOException, URISyntaxException {
         List<URL> extractedUrls = new ArrayList<>();
 
         if (!Files.exists(extractToFolder)) {
@@ -30,10 +39,10 @@ public final class JarJarLoader {
             File fatJarFile = Paths.get(fatJarUrl.toURI()).toFile();
             try (JarFile jarFile = new JarFile(fatJarFile)) {
 
-                // Read JarJar/output.txt
-                JarEntry outputEntry = jarFile.getJarEntry("JarJar/output.txt");
+                // Read output.txt from the specified folder
+                JarEntry outputEntry = jarFile.getJarEntry(folderInJar + "/output.txt");
                 if (outputEntry == null) {
-                    System.err.println("No JarJar/output.txt found in " + fatJarFile);
+                    System.err.println("No " + folderInJar + "/output.txt found in " + fatJarFile);
                     continue;
                 }
 
@@ -44,9 +53,9 @@ public final class JarJarLoader {
                         if (jarName.isEmpty()) continue;
 
                         // Extract the jar listed
-                        JarEntry jarEntry = jarFile.getJarEntry("JarJar/" + jarName);
+                        JarEntry jarEntry = jarFile.getJarEntry(folderInJar + "/" + jarName);
                         if (jarEntry == null) {
-                            System.err.println("Jar not found inside JarJar: " + jarName + " in " + fatJarFile);
+                            System.err.println("Jar not found inside " + folderInJar + ": " + jarName + " in " + fatJarFile);
                             continue;
                         }
 

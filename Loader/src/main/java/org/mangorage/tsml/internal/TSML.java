@@ -3,9 +3,9 @@ package org.mangorage.tsml.internal;
 import org.mangorage.tsml.TSMLLogger;
 import org.mangorage.tsml.api.Environment;
 import org.mangorage.tsml.api.ILogger;
-import org.mangorage.tsml.api.IMod;
-import org.mangorage.tsml.api.IModHandler;
+import org.mangorage.tsml.api.IModPreLaunch;
 import org.mangorage.tsml.internal.core.JarJarLoader;
+import org.mangorage.tsml.internal.core.mod.TSMLModloader;
 import org.mangorage.tsml.internal.core.TSMLTriviaSpireReflectiveLogger;
 import org.mangorage.tsml.internal.core.TSMLURLClassloader;
 
@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.ServiceLoader;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
-import java.util.stream.Collectors;
 
 /**
  * TriviaSpire ModLoader
@@ -78,10 +77,17 @@ public final class TSML {
 
         List<URL> urls = new ArrayList<>();
         final var modJars = findJarURLs(rootPath.resolve("mods"));
-        final var jarJarUrls = JarJarLoader.extractJarsFromFatJars(modJars, rootPath.resolve("extracted"));
+        final var defaultModJars = findJarURLs(rootPath.resolve("defaultMods"));
 
-        urls.addAll(jarJarUrls);
+        final var jarJarUrls = JarJarLoader.extractJarsFromFatJars(modJars, rootPath.resolve("extracted"));
+        final var jarJarDefaultUrls = JarJarLoader.extractJarsFromFatJars(defaultModJars, rootPath.resolve("extracted"));
+
         urls.addAll(modJars);
+        urls.addAll(jarJarUrls);
+
+        urls.addAll(defaultModJars);
+        urls.addAll(jarJarDefaultUrls);
+
         urls.add(trivialURL);
 
         final var finalUrls = urls.toArray(new URL[0]);
@@ -113,7 +119,7 @@ public final class TSML {
                 environment = Environment.UNKNOWN;
             }
 
-            ServiceLoader.load(ILogger.class).stream()
+            ServiceLoader.load(ILogger.class, tsmlLoader).stream()
                     .limit(1)
                     .findAny()
                     .ifPresentOrElse(provider -> {
@@ -126,15 +132,9 @@ public final class TSML {
 
             tsmlLoader.init();
 
-            final var modHandlers = ServiceLoader.load(IModHandler.class)
-                    .stream()
-                    .map(ServiceLoader.Provider::get)
-                    .collect(Collectors.toSet());
-
-            ServiceLoader.load(IMod.class, tsmlLoader).forEach(mod -> {
-                modHandlers.forEach(handler -> handler.handleMod(mod));
-                mod.onInitialize();
-            });
+            TSMLModloader.scanMods();
+            ServiceLoader.load(IModPreLaunch.class).forEach(IModPreLaunch::onPreLaunch);
+            TSMLModloader.initMods();
 
             Class<?> mainClass = tsmlLoader.loadClass("com.imjustdoom.triviaspire.lwjgl3.Lwjgl3Launcher");
             mainClass.getMethod("main", String[].class).invoke(null, (Object) args);

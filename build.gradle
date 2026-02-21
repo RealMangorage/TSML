@@ -10,17 +10,26 @@ repositories {
     mavenCentral()
 }
 
-dependencies {
-    compileOnly files('/build/run/TriviaSpire-1.0.0.jar')
-    compileOnly files("/build/run/TriviaSpire-Server-1.0.0.jar")
+configurations {
+    jarJarLoader {
+        canBeResolved = true
+        canBeConsumed = false
+    }
+    jarJarMod {
+        canBeResolved = true
+        canBeConsumed = false
+    }
+}
 
-    compileOnly('net.fabricmc:sponge-mixin:0.17.0+mixin.0.8.7')
-    compileOnly('io.github.llamalad7:mixinextras-common:0.5.3')
+
+dependencies {
+    jarJarLoader(project(":Loader"))
+    jarJarMod(project(":MixinMod"))
 }
 
 application {
     // CHANGE THIS or it WILL explode
-    mainClass = 'org.mangorage.tsml.internal.TSML'
+    mainClass = 'org.mangorage.tsml.bootstrap.Bootstrap'
 }
 
 jar {
@@ -31,11 +40,61 @@ jar {
     }
 }
 
+task fatJar(type: Jar) {
+    archiveBaseName.set('TSML')
+    archiveClassifier.set('') // Creates MixinMod-all.jar
+
+    // Your compiled classes
+    from sourceSets.main.output
+
+    // Include the compileOnly jars themselves (as .jar files) inside JarJar/
+    from {
+        configurations.jarJarLoader
+    } {
+        into 'JarJarLoader'
+    }
+
+    from {
+        configurations.jarJarMod
+    } {
+        into 'JarJarMods'
+    }
+
+    // Add output.txt listing the jars inside JarJar/
+    from {
+        // Build a temporary file with the jar names
+        def tmpFile = new File(temporaryDir, "output.txt")
+        tmpFile.text = configurations.jarJarLoader.files.collect { it.name }.join(System.lineSeparator())
+        tmpFile
+    } {
+        into 'JarJarLoader' // Put the file inside the JarJar folder
+    }
+
+    // Add output.txt listing the jars inside JarJar/
+    from {
+        // Build a temporary file with the jar names
+        def tmpFile = new File(temporaryDir, "output.txt")
+        tmpFile.text = configurations.jarJarMod.files.collect { it.name }.join(System.lineSeparator())
+        tmpFile
+    } {
+        into 'JarJarMods' // Put the file inside the JarJar folder
+    }
+
+    manifest {
+        attributes(
+                'Main-Class': application.mainClass
+        )
+    }
+
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
 tasks.register('runGame', JavaExec) {
     group = 'application'
     description = 'Runs the TriviaSpire game because clicking buttons is hard'
 
-    classpath = sourceSets.main.runtimeClasspath
+    classpath = fatJar.outputs.files
     mainClass = application.mainClass
 
     // THIS is the part your brain skipped

@@ -30,7 +30,7 @@ configurations {
 }
 
 dependencies {
-    compileOnly(project(":"))
+    compileOnly(project(":Loader"))
 
     compileOnly('net.fabricmc:sponge-mixin:0.17.0+mixin.0.8.7')
     compileOnly('io.github.llamalad7:mixinextras-common:0.5.3')
@@ -52,28 +52,37 @@ dependencies {
     jarJar'org.ow2.asm:asm-commons:9.8'
 }
 
-task fatJar(type: Jar) {
-    archiveBaseName.set('TSMLMixin')
-    archiveClassifier.set('') // Creates MixinMod-all.jar
+processResources {
+    // This tells Gradle: "If the version changes, this task is dirty"
+    inputs.property "version", project.version
 
-    // Your compiled classes
+    filesMatching("tsml.mods.json") {
+        expand "version": project.version
+    }
+}
+
+jar {
+
+    // Build output.txt during configuration, not execution
+    def outputTxt = new File(temporaryDir, "output.txt")
+    outputTxt.text = configurations.jarJar.files.collect { it.name }.join(System.lineSeparator())
+
+    archiveBaseName.set('TSMLMixin')
+    archiveClassifier.set('') // no classifier, replaces default jar
+
+    // Include compiled classes
     from sourceSets.main.output
 
-    // Include the compileOnly jars themselves (as .jar files) inside JarJar/
+    // Include compileOnly jars inside JarJar/
     from {
         configurations.jarJar
     } {
         into 'JarJar'
     }
 
-    // Add output.txt listing the jars inside JarJar/
-    from {
-        // Build a temporary file with the jar names
-        def tmpFile = new File(temporaryDir, "output.txt")
-        tmpFile.text = configurations.jarJar.files.collect { it.name }.join(System.lineSeparator())
-        tmpFile
-    } {
-        into 'JarJar' // Put the file inside the JarJar folder
+    // Include the output.txt
+    from(outputTxt) {
+        into 'JarJar'
     }
 
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE

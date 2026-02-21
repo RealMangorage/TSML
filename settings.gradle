@@ -1,2 +1,4 @@
 rootProject.name = 'TSML'
 include 'MixinMod'
+include 'Loader'
+

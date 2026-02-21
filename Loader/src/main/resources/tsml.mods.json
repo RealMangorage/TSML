@@ -1,0 +1,12 @@
+{
+  "id": "tsml",
+  "version": "${version}",
+  "name": "TSML",
+  "description": "Built in mod for TriviaSpireModLoader.",
+  "entrypoint": "org.mangorage.tsml.internal.core.BuiltInMod",
+  "properties": {
+    "mixins": [
+      "tsml.mixins.json"
+    ]
+  }
+}

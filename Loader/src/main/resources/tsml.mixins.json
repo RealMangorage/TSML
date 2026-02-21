@@ -4,6 +4,7 @@
   "package": "org.mangorage.tsml.internal.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
-    "LWJGL3LauncherMixin"
+    "MainMenuScreenMixin",
+    "Lwjgl3LauncherMixin"
   ]
 }

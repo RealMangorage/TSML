@@ -25,8 +25,10 @@ public final class TSMLURLClassloader extends java.net.URLClassLoader implements
     @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException {
         // Already loaded? Just return it
+
         Class<?> loaded = findLoadedClass(name);
         if (loaded != null) return loaded;
+
 
         // Load raw bytes
         byte[] classBytes = getClassBytes(name);
