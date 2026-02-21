@@ -1,0 +1,49 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group = 'org.mangorage.tiab'
+version = "$TSML_VERSION"
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compileOnly files('F:/HytaleProjects/TSML/build/run/TriviaSpire-1.0.0.jar')
+
+    compileOnly('net.fabricmc:sponge-mixin:0.17.0+mixin.0.8.7')
+    compileOnly('io.github.llamalad7:mixinextras-common:0.5.3')
+}
+
+application {
+    // CHANGE THIS or it WILL explode
+    mainClass = 'org.mangorage.tsml.TSML'
+}
+
+tasks.register('runGame', JavaExec) {
+    group = 'application'
+    description = 'Runs the TriviaSpire game because clicking buttons is hard'
+
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = application.mainClass
+
+    // THIS is the part your brain skipped
+    workingDir = file("$buildDir/run")
+
+    doFirst {
+        workingDir.mkdirs()
+    }
+
+    // optional JVM args, because games like memory
+    jvmArgs '-Xms512M', '-Xmx2G'
+}
+
+jar {
+    manifest {
+        attributes(
+                'Main-Class': application.mainClass
+        )
+    }
+}

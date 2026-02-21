@@ -1,0 +1,80 @@
+plugins {
+    id 'java'
+}
+
+group = 'org.mangorage.tiab'
+version = "$TSML_VERSION"
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+    maven {
+        url = 'https://maven.minecraftforge.net/'
+    }
+    maven {
+        url = "https://maven.fabricmc.net/"
+    }
+    maven {
+        url 'https://m2.dv8tion.net/releases'
+    }
+    maven {
+        url 'https://jitpack.io'
+    }
+}
+
+configurations {
+    compileOnlyResolved {
+        canBeResolved = true
+        canBeConsumed = false
+    }
+}
+
+dependencies {
+    compileOnly(project(":"))
+
+    compileOnly('net.fabricmc:sponge-mixin:0.17.0+mixin.0.8.7')
+    compileOnly('io.github.llamalad7:mixinextras-common:0.5.3')
+
+    compileOnly("com.google.code.gson:gson:2.10.1")
+    compileOnly('org.ow2.asm:asm:9.8')
+    compileOnly('org.ow2.asm:asm-util:9.8')
+    compileOnly('org.ow2.asm:asm-analysis:9.8')
+    compileOnly('org.ow2.asm:asm-tree:9.8')
+    compileOnly('org.ow2.asm:asm-commons:9.8')
+
+    compileOnlyResolved 'net.fabricmc:sponge-mixin:0.17.0+mixin.0.8.7'
+    compileOnlyResolved 'io.github.llamalad7:mixinextras-common:0.5.3'
+    compileOnlyResolved "com.google.code.gson:gson:2.10.1"
+    compileOnlyResolved 'org.ow2.asm:asm:9.8'
+    compileOnlyResolved 'org.ow2.asm:asm-util:9.8'
+    compileOnlyResolved 'org.ow2.asm:asm-analysis:9.8'
+    compileOnlyResolved 'org.ow2.asm:asm-tree:9.8'
+    compileOnlyResolved 'org.ow2.asm:asm-commons:9.8'
+}
+
+task fatJar(type: Jar) {
+    archiveBaseName.set('TSMLMixin')
+    archiveClassifier.set('') // Creates MixinMod-all.jar
+
+    // Your compiled classes
+    from sourceSets.main.output
+
+    // Include the compileOnly jars themselves (as .jar files) inside JarJar/
+    from {
+        configurations.compileOnlyResolved
+    } {
+        into 'JarJar'
+    }
+
+    // Add output.txt listing the jars inside JarJar/
+    from {
+        // Build a temporary file with the jar names
+        def tmpFile = new File(temporaryDir, "output.txt")
+        tmpFile.text = configurations.compileOnlyResolved.files.collect { it.name }.join(System.lineSeparator())
+        tmpFile
+    } {
+        into 'JarJar' // Put the file inside the JarJar folder
+    }
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
