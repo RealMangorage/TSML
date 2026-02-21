@@ -1,5 +1,6 @@
 package org.mangorage.tsmlmixin.mod;
 
+import org.mangorage.tsml.TSMLLogger;
 import org.mangorage.tsml.api.IMod;
 
 public final class TSMLMixinMod implements IMod {
@@ -20,6 +21,6 @@ public final class TSMLMixinMod implements IMod {
 
     @Override
     public void onInitialize() {
-
+        TSMLLogger.get().info("Hello from the mixin mod!");
     }
 }

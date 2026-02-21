@@ -1,5 +1,6 @@
 package org.mangorage.tsmlmixin.mixin.services;
 
+import org.mangorage.tsml.TSMLLogger;
 import org.mangorage.tsml.api.ITSMLClassloader;
 import org.mangorage.tsmlmixin.mixin.SpongeMixinImpl;
 import org.mangorage.tsmlmixin.mixin.core.MixinContainerImpl;
@@ -23,6 +24,7 @@ import org.spongepowered.asm.transformers.MixinClassReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.Collection;
 import java.util.List;
 
@@ -32,6 +34,7 @@ public final class TSMLMixinServiceImpl extends MixinServiceAbstract implements 
 
     @Override
     public void prepare() {
+
         super.prepare();
     }
 
@@ -42,7 +45,7 @@ public final class TSMLMixinServiceImpl extends MixinServiceAbstract implements 
 
     @Override
     public void beginPhase() {
-        System.out.println("Beginning Mixin Phase: " + MixinEnvironment.getCurrentEnvironment().getPhase());
+        TSMLLogger.get().info("Beginning Mixin Phase: " + MixinEnvironment.getCurrentEnvironment().getPhase());
         if (MixinEnvironment.getCurrentEnvironment().getPhase() == MixinEnvironment.Phase.PREINIT) {
             SpongeMixinImpl.setTransformerFactory(getInternal(IMixinTransformerFactory.class));
         }
@@ -101,7 +104,7 @@ public final class TSMLMixinServiceImpl extends MixinServiceAbstract implements 
 
     @Override
     public Collection<String> getPlatformAgents() {
-        return List.of();
+        return List.of("org.mangorage.tsmlmixin.mixin.services.MixinPlatformServiceAgentImpl");
     }
 
     @Override
@@ -119,7 +122,7 @@ public final class TSMLMixinServiceImpl extends MixinServiceAbstract implements 
 
     @Override
     public URL[] getClassPath() {
-        return new URL[0];
+        return ((URLClassLoader) Thread.currentThread().getContextClassLoader()).getURLs();
     }
 
     @Override

@@ -12,6 +12,7 @@ repositories {
 
 dependencies {
     compileOnly files('F:/HytaleProjects/TSML/build/run/TriviaSpire-1.0.0.jar')
+    compileOnly files("F:\\HytaleProjects\\TSML\\build\\run\\TriviaSpire-Server-1.0.0.jar")
 
     compileOnly('net.fabricmc:sponge-mixin:0.17.0+mixin.0.8.7')
     compileOnly('io.github.llamalad7:mixinextras-common:0.5.3')
@@ -19,7 +20,15 @@ dependencies {
 
 application {
     // CHANGE THIS or it WILL explode
-    mainClass = 'org.mangorage.tsml.TSML'
+    mainClass = 'org.mangorage.tsml.internal.TSML'
+}
+
+jar {
+    manifest {
+        attributes(
+                'Main-Class': application.mainClass
+        )
+    }
 }
 
 tasks.register('runGame', JavaExec) {
@@ -38,12 +47,4 @@ tasks.register('runGame', JavaExec) {
 
     // optional JVM args, because games like memory
     jvmArgs '-Xms512M', '-Xmx2G'
-}
-
-jar {
-    manifest {
-        attributes(
-                'Main-Class': application.mainClass
-        )
-    }
 }

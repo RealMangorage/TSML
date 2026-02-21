@@ -1,5 +1,6 @@
-package org.mangorage.tsml.core;
+package org.mangorage.tsml.internal.core;
 
+import org.mangorage.tsml.TSMLLogger;
 import org.mangorage.tsml.api.IMod;
 
 public class BuiltInMod implements IMod {
@@ -20,7 +21,7 @@ public class BuiltInMod implements IMod {
 
     @Override
     public void onInitialize() {
-        System.out.println("Built-in mod initialized!");
+        TSMLLogger.get().info("Built-in mod initialized!");
     }
 
     @Override

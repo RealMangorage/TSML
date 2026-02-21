@@ -1,4 +1,4 @@
-package org.mangorage.tsml.core;
+package org.mangorage.tsml.internal.core;
 
 import java.io.*;
 import java.net.URISyntaxException;
