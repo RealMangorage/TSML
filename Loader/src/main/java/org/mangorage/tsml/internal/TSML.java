@@ -11,6 +11,7 @@ import org.mangorage.tsml.internal.core.TSMLURLClassloader;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -18,7 +19,9 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ServiceLoader;
+import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
 
 /**
@@ -65,8 +68,21 @@ public final class TSML {
         return environment;
     }
 
+    public static List<String> getNestedPathsFromStream(InputStream jarStream, String prefix) throws IOException {
+        List<String> internalPaths = new ArrayList<>();
+        // Wrap the incoming stream in a JarInputStream to read its entries
+        try (JarInputStream jis = new JarInputStream(jarStream)) {
+            JarEntry entry;
+            while ((entry = jis.getNextJarEntry()) != null) {
+                if (entry.getName().startsWith(prefix + "/") && entry.getName().endsWith(".jar")) {
+                    internalPaths.add(entry.getName());
+                }
+            }
+        }
+        return internalPaths;
+    }
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args, URL baseResource) throws Exception {
 
         Path rootPath = Path.of("").toAbsolutePath();
 
@@ -77,23 +93,35 @@ public final class TSML {
 
         List<URL> urls = new ArrayList<>();
         final var modJars = findJarURLs(rootPath.resolve("mods"));
-        final var defaultModJars = findJarURLs(rootPath.resolve("defaultMods"));
 
-        final var jarJarUrls = JarJarLoader.extractJarsFromFatJars(modJars, rootPath.resolve("extracted"));
-        final var jarJarDefaultUrls = JarJarLoader.extractJarsFromFatJars(defaultModJars, rootPath.resolve("extracted"));
+        List<String> allNestedJars = new ArrayList<>();
+
+        // 1. Get the Mod Jars from the Base Resource (Fat Jar)
+        List<String> nestedMods = JarJarLoader.getNestedJarPaths(List.of(baseResource), "JarJarMods");
+        allNestedJars.addAll(nestedMods);
+
+        // 2. FOR EACH MOD: Look inside it for nested libraries
+        for (String modPath : nestedMods) {
+            // We get the stream for the mod jar from the parent loader
+            InputStream modStream = TSML.class.getClassLoader().getResourceAsStream(modPath);
+            if (modStream != null) {
+                // Look for "JarJar/" inside the "JarJarMods/SomeMod.jar"
+                List<String> modLibs = TSML.getNestedPathsFromStream(modStream, "JarJar");
+
+                // IMPORTANT: The ClassLoader needs a way to resolve these.
+                // If your ClassLoader only looks at the Root Jar, it won't find
+                // "JarJar/lib.jar" inside "JarJarMods/mod.jar" easily.
+                allNestedJars.addAll(modLibs);
+            }
+        }
 
         urls.addAll(modJars);
-        urls.addAll(jarJarUrls);
-
-        urls.addAll(defaultModJars);
-        urls.addAll(jarJarDefaultUrls);
-
         urls.add(trivialURL);
 
         final var finalUrls = urls.toArray(new URL[0]);
 
         ClassLoader currentLoader = Thread.currentThread().getContextClassLoader();
-        try (var tsmlLoader = new TSMLURLClassloader(finalUrls, currentLoader)) {
+        try (var tsmlLoader = new TSMLURLClassloader(finalUrls, allNestedJars, currentLoader)) {
 
             Thread.currentThread().setContextClassLoader(tsmlLoader);
 
@@ -132,12 +160,22 @@ public final class TSML {
 
             tsmlLoader.init();
 
-            TSMLModloader.scanMods();
-            ServiceLoader.load(IModPreLaunch.class).forEach(IModPreLaunch::onPreLaunch);
+            TSMLModloader.scanMods(
+                    nestedMods.stream()
+                            .map(mod -> getNestedJarPath(baseResource, mod))
+                            .toList()
+            );
+
+            ServiceLoader.load(IModPreLaunch.class, tsmlLoader).forEach(IModPreLaunch::onPreLaunch);
+
             TSMLModloader.initMods();
 
             Class<?> mainClass = tsmlLoader.loadClass("com.imjustdoom.triviaspire.lwjgl3.Lwjgl3Launcher");
             mainClass.getMethod("main", String[].class).invoke(null, (Object) args);
         }
+    }
+
+    private static String getNestedJarPath(URL rootJar, String jarName) {
+        return rootJar.toString() + "!/" + jarName;
     }
 }

@@ -6,6 +6,7 @@ import io.github.classgraph.ScanResult;
 import org.mangorage.tsml.TSMLLogger;
 import org.mangorage.tsml.api.IModContainer;
 import org.mangorage.tsml.api.Mod;
+import org.mangorage.tsml.internal.core.BuiltInMod;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -24,7 +25,7 @@ public final class TSMLModloader {
 
         // 2. Locate the file on the classpath
         // Using the ClassLoader ensures it looks inside all loaded mod JARs
-        InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(fileName);
+        InputStream is = id.equals("tsml") ? Thread.currentThread().getContextClassLoader().getParent().getResourceAsStream(fileName) : Thread.currentThread().getContextClassLoader().getResourceAsStream(fileName);
 
         if (is == null) {
             System.err.println("Could not find metadata file: " + fileName);
@@ -41,13 +42,22 @@ public final class TSMLModloader {
         }
     }
 
-    public static void scanMods() {
+    public static void scanMods(List<String> nestedJars) {
         TSMLLogger.get().info("Scanning for mods...");
 
+        modContainerMap.put("tsml", new ModContainerImpl(
+                getModInfo("tsml"),
+                BuiltInMod.class
+        ));
+
         try (ScanResult scanResult = new ClassGraph()
+                .enableAnnotationInfo()         // Required to find @Annotation
+                .enableClassInfo()
+                .enableRemoteJarScanning()
                 .addClassLoader(Thread.currentThread().getContextClassLoader())
-                .enableAnnotationInfo()  // Required to find @Mod
-                .scan()) {
+                .overrideClasspath(nestedJars)
+                .scan()
+        ) {
 
             // Find classes that have the @Mod annotation
             scanResult

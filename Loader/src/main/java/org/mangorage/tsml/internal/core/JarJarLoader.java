@@ -75,4 +75,32 @@ public final class JarJarLoader {
 
         return extractedUrls;
     }
+
+    /**
+     * Scans the fat jars for JarJar/output.txt and returns the full internal resource paths.
+     * Example return: ["JarJar/library-1.0.jar", "JarJar/other-lib.jar"]
+     */
+    public static List<String> getNestedJarPaths(List<URL> fatJars, String location) throws IOException, URISyntaxException {
+        List<String> internalPaths = new ArrayList<>();
+
+        for (URL fatJarUrl : fatJars) {
+            File fatJarFile = Paths.get(fatJarUrl.toURI()).toFile();
+            try (JarFile jarFile = new JarFile(fatJarFile)) {
+                JarEntry outputEntry = jarFile.getJarEntry(location + "/output.txt");
+                if (outputEntry == null) continue;
+
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(jarFile.getInputStream(outputEntry)))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        line = line.trim();
+                        if (!line.isEmpty()) {
+                            // Prepend the directory where these jars live
+                            internalPaths.add(location + "/" + line);
+                        }
+                    }
+                }
+            }
+        }
+        return internalPaths;
+    }
 }
