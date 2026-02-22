@@ -38,7 +38,7 @@ public final class NestedUtil {
 
         for (String modPath : nestedModPaths) {
             // Create the parent node for the Mod
-            NestedJar modNode = new NestedJar(modPath, new ArrayList<>());
+            NestedJar modNode = new NestedJar(modPath, baseResource.getPath(), new ArrayList<>());
 
             // 2. Look inside THIS specific mod for its own nested libraries
             try (InputStream modStream = TSML.class.getClassLoader().getResourceAsStream(modPath)) {
@@ -48,7 +48,7 @@ public final class NestedUtil {
 
                     for (String libPath : modLibs) {
                         // Add the library as a child of the mod
-                        modNode.nestedJars().add(new NestedJar(libPath, new ArrayList<>()));
+                        modNode.nestedJars().add(new NestedJar(libPath, baseResource.getPath(), new ArrayList<>()));
                     }
                 }
             } catch (IOException e) {
@@ -75,10 +75,10 @@ public final class NestedUtil {
             List<String> nestedLibs = getNestedPathsFromStream(modStream, "JarJar");
 
             // Create a root node representing the mod itself
-            NestedJar modNode = new NestedJar(modUri.toString(), new ArrayList<>());
+            NestedJar modNode = new NestedJar(modUri.toString(), modResource.getPath(), new ArrayList<>());
 
             for (String libPath : nestedLibs) {
-                modNode.nestedJars().add(new NestedJar(libPath, new ArrayList<>()));
+                modNode.nestedJars().add(new NestedJar(libPath, modResource.getPath(), new ArrayList<>()));
             }
 
             nestedJarTree.add(modNode);

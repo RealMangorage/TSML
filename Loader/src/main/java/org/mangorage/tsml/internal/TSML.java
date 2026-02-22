@@ -103,7 +103,7 @@ public final class TSML {
 
             final var path = nestedJars
                     .stream()
-                    .filter(nestedJar -> nestedJar.jarPath().contains("Mixin"))
+                    .filter(nestedJar -> nestedJar.resourcePath().contains("Mixin"))
                     .findAny()
                     .get();
 
@@ -111,7 +111,7 @@ public final class TSML {
                     List.of(
                             getNestedJarPath(
                                     baseResource,
-                                    path.jarPath()
+                                    path.resourcePath()
                             )
                     )
             );

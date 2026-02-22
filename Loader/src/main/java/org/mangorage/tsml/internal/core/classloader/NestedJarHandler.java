@@ -42,15 +42,15 @@ public final class NestedJarHandler {
 
         // 2. Recurse nested jars
         for (NestedJar node : nestedJars) {
-            ClassBytesWithCodeSource found = searchRecursive(node, path, node.jarPath());
+            ClassBytesWithCodeSource found = searchRecursive(node, path);
             if (found != null) return found;
         }
 
         return null;
     }
 
-    private ClassBytesWithCodeSource searchRecursive(NestedJar node, String targetPath, String parentPath) {
-        try (InputStream jarStream = classloader.getParent().getResourceAsStream(node.jarPath())) {
+    private ClassBytesWithCodeSource searchRecursive(NestedJar node, String targetPath) {
+        try (InputStream jarStream = classloader.getParent().getResourceAsStream(node.resourcePath())) {
             if (jarStream == null) return null;
 
             try (JarInputStream jis = new JarInputStream(jarStream)) {
@@ -59,14 +59,13 @@ public final class NestedJarHandler {
 
                     if (entry.getName().equals(targetPath)) {
                         byte[] bytes = jis.readAllBytes();
-                        URL originUrl = createNestedJarURL(parentPath, bytes);
-                        return new ClassBytesWithCodeSource(bytes, originUrl);
+                        return new ClassBytesWithCodeSource(bytes, createOriginURL(node, bytes));
                     }
 
                     for (NestedJar child : node.nestedJars()) {
-                        if (entry.getName().equals(child.jarPath())) {
+                        if (entry.getName().equals(child.resourcePath())) {
                             ClassBytesWithCodeSource found =
-                                    searchInsideNestedStream(jis, child, targetPath, parentPath + "!/" + child.jarPath());
+                                    searchInsideNestedStream(jis, child, targetPath);
                             if (found != null) return found;
                         }
                     }
@@ -78,7 +77,7 @@ public final class NestedJarHandler {
         return null;
     }
 
-    private ClassBytesWithCodeSource searchInsideNestedStream(InputStream parentJis, NestedJar node, String targetPath, String fullPath) throws IOException {
+    private ClassBytesWithCodeSource searchInsideNestedStream(InputStream parentJis, NestedJar node, String targetPath) throws IOException {
         InputStream shield = new FilterInputStream(parentJis) { @Override public void close() {} };
 
         try (JarInputStream jis = new JarInputStream(shield)) {
@@ -87,14 +86,13 @@ public final class NestedJarHandler {
 
                 if (entry.getName().equals(targetPath)) {
                     byte[] bytes = jis.readAllBytes();
-                    URL originUrl = createNestedJarURL(fullPath, bytes);
-                    return new ClassBytesWithCodeSource(bytes, originUrl);
+                    return new ClassBytesWithCodeSource(bytes, createOriginURL(node, bytes));
                 }
 
                 for (NestedJar child : node.nestedJars()) {
-                    if (entry.getName().equals(child.jarPath())) {
+                    if (entry.getName().equals(child.resourcePath())) {
                         ClassBytesWithCodeSource found =
-                                searchInsideNestedStream(jis, child, targetPath, fullPath + "!/" + child.jarPath());
+                                searchInsideNestedStream(jis, child, targetPath);
                         if (found != null) return found;
                     }
                 }
@@ -113,14 +111,14 @@ public final class NestedJarHandler {
 
     public ResourceWithOrigin searchResource(String name) {
         for (NestedJar node : nestedJars) {
-            ResourceWithOrigin res = searchResourceRecursive(node, name, node.jarPath());
+            ResourceWithOrigin res = searchResourceRecursive(node, name);
             if (res != null) return res;
         }
         return null;
     }
 
-    private ResourceWithOrigin searchResourceRecursive(NestedJar node, String targetPath, String parentPath) {
-        try (InputStream jarStream = classloader.getParent().getResourceAsStream(node.jarPath())) {
+    private ResourceWithOrigin searchResourceRecursive(NestedJar node, String targetPath) {
+        try (InputStream jarStream = classloader.getParent().getResourceAsStream(node.resourcePath())) {
             if (jarStream == null) return null;
 
             try (JarInputStream jis = new JarInputStream(jarStream)) {
@@ -128,14 +126,12 @@ public final class NestedJarHandler {
                 while ((entry = jis.getNextJarEntry()) != null) {
                     if (entry.getName().equals(targetPath)) {
                         byte[] bytes = jis.readAllBytes();
-                        URL origin = createNestedJarURL(parentPath, bytes);
-                        return new ResourceWithOrigin(bytes, origin);
+                        return new ResourceWithOrigin(bytes, createOriginURL(node, bytes));
                     }
 
                     for (NestedJar child : node.nestedJars()) {
-                        if (entry.getName().equals(child.jarPath())) {
-                            ResourceWithOrigin found =
-                                    searchResourceInsideNestedStream(jis, child, targetPath, parentPath + "!/" + child.jarPath());
+                        if (entry.getName().equals(child.resourcePath())) {
+                            ResourceWithOrigin found = searchResourceInsideNestedStream(jis, child, targetPath);
                             if (found != null) return found;
                         }
                     }
@@ -147,7 +143,7 @@ public final class NestedJarHandler {
         return null;
     }
 
-    private ResourceWithOrigin searchResourceInsideNestedStream(InputStream parentJis, NestedJar node, String targetPath, String fullPath) throws IOException {
+    private ResourceWithOrigin searchResourceInsideNestedStream(InputStream parentJis, NestedJar node, String targetPath) throws IOException {
         InputStream shield = new FilterInputStream(parentJis) { @Override public void close() {} };
 
         try (JarInputStream jis = new JarInputStream(shield)) {
@@ -155,14 +151,13 @@ public final class NestedJarHandler {
             while ((entry = jis.getNextJarEntry()) != null) {
                 if (entry.getName().equals(targetPath)) {
                     byte[] bytes = jis.readAllBytes();
-                    URL originUrl = createNestedJarURL(fullPath, bytes);
-                    return new ResourceWithOrigin(bytes, originUrl);
+                    return new ResourceWithOrigin(bytes, createOriginURL(node, bytes));
                 }
 
                 for (NestedJar child : node.nestedJars()) {
-                    if (entry.getName().equals(child.jarPath())) {
+                    if (entry.getName().equals(child.resourcePath())) {
                         ResourceWithOrigin found =
-                                searchResourceInsideNestedStream(jis, child, targetPath, fullPath + "!/" + child.jarPath());
+                                searchResourceInsideNestedStream(jis, child, targetPath);
                         if (found != null) return found;
                     }
                 }
@@ -172,15 +167,16 @@ public final class NestedJarHandler {
         return null;
     }
 
-    // Add this to NestedJarHandler
+    // -------------------- Resource Enumeration --------------------
+
     public void findResources(String name, List<URL> urls) throws IOException {
         for (NestedJar node : nestedJars) {
-            findResourcesRecursive(node, name, node.jarPath(), urls);
+            findResourcesRecursive(node, name, urls);
         }
     }
 
-    private void findResourcesRecursive(NestedJar node, String name, String parentPath, List<URL> urls) throws IOException {
-        try (InputStream jarStream = classloader.getParent().getResourceAsStream(node.jarPath())) {
+    private void findResourcesRecursive(NestedJar node, String name, List<URL> urls) throws IOException {
+        try (InputStream jarStream = classloader.getParent().getResourceAsStream(node.resourcePath())) {
             if (jarStream == null) return;
 
             try (JarInputStream jis = new JarInputStream(jarStream)) {
@@ -188,23 +184,20 @@ public final class NestedJarHandler {
                 while ((entry = jis.getNextJarEntry()) != null) {
                     if (entry.getName().equals(name)) {
                         byte[] bytes = jis.readAllBytes();
-                        urls.add(createNestedJarURL(parentPath, bytes));
+                        urls.add(createOriginURL(node, bytes));
                     }
 
-                    // Recurse nested children
                     for (NestedJar child : node.nestedJars()) {
-                        if (entry.getName().equals(child.jarPath())) {
-                            findResourcesInsideNestedStream(jis, child, name, parentPath + "!/" + child.jarPath(), urls);
+                        if (entry.getName().equals(child.resourcePath())) {
+                            findResourcesInsideNestedStream(jis, child, name, urls);
                         }
                     }
                 }
             }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
-    private void findResourcesInsideNestedStream(InputStream parentJis, NestedJar node, String name, String fullPath, List<URL> urls) throws IOException {
+    private void findResourcesInsideNestedStream(InputStream parentJis, NestedJar node, String name, List<URL> urls) throws IOException {
         InputStream shield = new FilterInputStream(parentJis) { @Override public void close() {} };
 
         try (JarInputStream jis = new JarInputStream(shield)) {
@@ -212,37 +205,29 @@ public final class NestedJarHandler {
             while ((entry = jis.getNextJarEntry()) != null) {
                 if (entry.getName().equals(name)) {
                     byte[] bytes = jis.readAllBytes();
-                    urls.add(createNestedJarURL(fullPath, bytes));
+                    urls.add(createOriginURL(node, bytes));
                 }
 
                 for (NestedJar child : node.nestedJars()) {
-                    if (entry.getName().equals(child.jarPath())) {
-                        findResourcesInsideNestedStream(jis, child, name, fullPath + "!/" + child.jarPath(), urls);
+                    if (entry.getName().equals(child.resourcePath())) {
+                        findResourcesInsideNestedStream(jis, child, name, urls);
                     }
                 }
             }
         }
     }
 
-    // -------------------- Nested URL Creation --------------------
+    // -------------------- Nested URL / CodeSource Creation --------------------
 
-    private URL createNestedJarURL(String jarPath, byte[] data) {
+    private URL createOriginURL(NestedJar node, byte[] data) {
         try {
-            return new URL("file", null, -1, jarPath, new URLStreamHandler() {
+            return new URL("file", null, -1, node.getFullPath(), new URLStreamHandler() {
                 @Override
                 protected URLConnection openConnection(URL u) {
                     return new URLConnection(u) {
                         @Override public void connect() {}
-
-                        @Override
-                        public InputStream getInputStream() {
-                            return new ByteArrayInputStream(data);
-                        }
-
-                        @Override
-                        public int getContentLength() {
-                            return data.length;
-                        }
+                        @Override public InputStream getInputStream() { return new ByteArrayInputStream(data); }
+                        @Override public int getContentLength() { return data.length; }
                     };
                 }
             });
@@ -250,5 +235,4 @@ public final class NestedJarHandler {
             throw new RuntimeException(e);
         }
     }
-
 }
