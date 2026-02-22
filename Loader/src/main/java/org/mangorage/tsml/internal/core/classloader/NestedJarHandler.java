@@ -1,95 +1,43 @@
-package org.mangorage.tsml.internal.core;
-
-import org.mangorage.tsml.api.IClassTransformer;
-import org.mangorage.tsml.api.ITSMLClassloader;
+package org.mangorage.tsml.internal.core.classloader;
 
 import java.io.ByteArrayInputStream;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
-import java.security.CodeSource;
-import java.security.ProtectionDomain;
-import java.security.cert.Certificate;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
 import java.util.List;
-import java.util.ServiceLoader;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 
-public final class TSMLURLClassloader extends URLClassLoader implements ITSMLClassloader {
+public final class NestedJarHandler {
+    private final List<NestedJar> nestedJars;
+    private final ClassLoader classloader;
 
-    private final List<IClassTransformer> transformers = new ArrayList<>();
-    private final List<NestedJar> nestedJars = new ArrayList<>();
-    private final URL[] jarUrls;
-
-    public TSMLURLClassloader(URL[] urls, List<NestedJar> nestedJars, ClassLoader parent) {
-        super(urls, parent);
-        this.jarUrls = urls;
-        if (nestedJars != null) {
-            this.nestedJars.addAll(nestedJars);
-        }
+    NestedJarHandler(List<NestedJar> nestedJars, ClassLoader classLoader) {
+        this.nestedJars = nestedJars;
+        this.classloader = classLoader;
     }
 
-    @Override
-    protected Class<?> findClass(String name) throws ClassNotFoundException {
-        // Already loaded? Just return it
 
-        Class<?> loaded = findLoadedClass(name);
-        if (loaded != null) return loaded;
-
-
-        // Load raw bytes
-        byte[] classBytes = getClassBytes(name);
-
-        // Apply transformers
-        if (!transformers.isEmpty()) {
-            for (IClassTransformer transformer : transformers) {
-                try {
-                    byte[] transformed = transformer.transform(name.replace('/', '.'), classBytes);
-                    if (transformed != null) {
-                        classBytes = transformed;
-                    }
-                } catch (Throwable t) {
-                    throw new RuntimeException("Transformation failed for " + name, t);
-                }
-            }
+    InputStream getResourceAsStream(String name) {
+        // 2. Try nested
+        byte[] data = searchNestedJars(name);
+        if (data != null) {
+            return new java.io.ByteArrayInputStream(data);
         }
-
-        // Proper CodeSource for Mixin / Tinylog
-        URL codeSourceURL = jarUrls.length > 0 ? jarUrls[0] : null;
-        CodeSource codeSource = codeSourceURL != null ? new CodeSource(codeSourceURL, (Certificate[]) null) : null;
-        ProtectionDomain pd = new ProtectionDomain(codeSource, null, this, null);
-
-        return defineClass(name, classBytes, 0, classBytes.length, pd);
-    }
-
-    @Override
-    public byte[] getClassBytes(String cn) {
-        String path = cn.replace('.', '/') + ".class";
-        try (var resource = getResourceAsStream(path)) {
-            if (resource == null) {
-                return getNestedClassBytes(cn);
-            }
-            return resource.readAllBytes(); // Java 9+
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        return null;
     }
 
     /**
      * Searches both external URLs and nested JARs for class bytes.
      */
-    public byte[] getNestedClassBytes(String cn) {
+    byte[] getNestedClassBytes(String cn) {
         String path = cn.replace('.', '/') + ".class";
 
         // Try external URLs first (Native URLClassLoader behavior) via super
-        try (InputStream is = super.getResourceAsStream(path)) {
+        try (InputStream is = classloader.getResourceAsStream(path)) {
             if (is != null) return is.readAllBytes();
         } catch (IOException ignored) {}
 
@@ -98,7 +46,7 @@ public final class TSMLURLClassloader extends URLClassLoader implements ITSMLCla
     }
 
     // Update your search entry point
-    private byte[] searchNestedJars(String resourcePath) {
+    byte[] searchNestedJars(String resourcePath) {
         for (NestedJar node : nestedJars) {
             byte[] found = searchRecursive(node, resourcePath);
             if (found != null) return found;
@@ -113,7 +61,7 @@ public final class TSMLURLClassloader extends URLClassLoader implements ITSMLCla
         // 1. Get the stream for the current node (the JAR itself)
         // If it's a top-level JAR, get from parent. If deeper, this logic needs
         // to be adjusted to pull from the current stream context.
-        try (InputStream jarStream = getParent().getResourceAsStream(node.jarPath())) {
+        try (InputStream jarStream = classloader.getParent().getResourceAsStream(node.jarPath())) {
             if (jarStream == null) return null;
 
             try (JarInputStream jis = new JarInputStream(jarStream)) {
@@ -167,45 +115,7 @@ public final class TSMLURLClassloader extends URLClassLoader implements ITSMLCla
         return null;
     }
 
-    @Override
-    public URL findResource(String name) {
-        // Check external JARs
-        URL url = super.findResource(name);
-        if (url != null) return url;
-
-        // NOTE: If you need to return a URL for a nested resource,
-        // you would need a custom URLStreamHandler.
-        // For simple stream reading, use getResourceAsStream().
-        return null;
-    }
-
-    @Override
-    public InputStream getResourceAsStream(String name) {
-        // 1. Try external
-        InputStream is = super.getResourceAsStream(name);
-        if (is != null) {
-            return is;
-        }
-
-        // 2. Try nested
-        byte[] data = searchNestedJars(name);
-        if (data != null) {
-            return new java.io.ByteArrayInputStream(data);
-        }
-
-        return getParent().getResourceAsStream(name);
-    }
-
-    @Override
-    public Enumeration<URL> findResources(String name) throws IOException {
-        List<URL> urls = new ArrayList<>();
-
-        // 1. Get resources from the standard URLClassLoader (the external JARs)
-        Enumeration<URL> superResources = super.findResources(name);
-        while (superResources.hasMoreElements()) {
-            urls.add(superResources.nextElement());
-        }
-
+    void findResource(String name, List<URL> urls) throws IOException {
         // 2. Add resources from our nested JARs
         for (var nestedPath : nestedJars) {
             byte[] data = searchNestedJars(name); // Use your existing search logic
@@ -213,8 +123,6 @@ public final class TSMLURLClassloader extends URLClassLoader implements ITSMLCla
                 urls.add(createNestedURL(nestedPath.jarPath(), name, data));
             }
         }
-
-        return Collections.enumeration(urls);
     }
 
     private URL createNestedURL(String jarPath, String resourceName, byte[] data) throws IOException {
@@ -238,15 +146,5 @@ public final class TSMLURLClassloader extends URLClassLoader implements ITSMLCla
                 };
             }
         });
-    }
-
-    @Override
-    public boolean hasClass(final String name) {
-        return findLoadedClass(name.replace('/', '.')) != null;
-    }
-
-    public void init() {
-        // Load transformers via SPI
-        ServiceLoader.load(IClassTransformer.class, this).forEach(transformers::add);
     }
 }

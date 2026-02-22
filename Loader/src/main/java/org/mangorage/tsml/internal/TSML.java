@@ -4,64 +4,27 @@ import org.mangorage.tsml.TSMLLogger;
 import org.mangorage.tsml.api.Environment;
 import org.mangorage.tsml.api.ILogger;
 import org.mangorage.tsml.api.IModPreLaunch;
-import org.mangorage.tsml.internal.core.JarJarLoader;
-import org.mangorage.tsml.internal.core.NestedJar;
+import org.mangorage.tsml.internal.core.classloader.NestedJar;
 import org.mangorage.tsml.internal.core.mod.TSMLModloader;
 import org.mangorage.tsml.internal.core.TSMLTriviaSpireReflectiveLogger;
-import org.mangorage.tsml.internal.core.TSMLURLClassloader;
+import org.mangorage.tsml.internal.core.classloader.TSMLURLClassloader;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ServiceLoader;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
-import java.util.jar.JarInputStream;
-import java.util.jar.Manifest;
+
+import static org.mangorage.tsml.internal.core.util.NestedUtil.*;
+import static org.mangorage.tsml.internal.core.util.Util.*;
 
 /**
  * TriviaSpire ModLoader
  */
 public final class TSML {
-
-    /**
-     * Finds all .jar files in a folder (non-recursive) and returns them as URLs
-     *
-     * @param folderPath folder to search
-     * @return list of URLs pointing to jars
-     * @throws IOException if folder access fails
-     */
-    public static List<URL> findJarURLs(Path folderPath) throws IOException {
-        List<URL> jarUrls = new ArrayList<>();
-
-        if (!Files.exists(folderPath) || !Files.isDirectory(folderPath)) {
-            System.err.println("Invalid folder: " + folderPath);
-            return jarUrls;
-        }
-
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(folderPath, "*.jar")) {
-            for (Path jarPath : stream) {
-                jarUrls.add(jarPath.toUri().toURL());
-            }
-        }
-
-        return jarUrls;
-    }
-
-    public static String getMainClass(File jarFile) throws IOException {
-        try (JarFile jar = new JarFile(jarFile)) {
-            Manifest manifest = jar.getManifest();
-            if (manifest == null) return null;
-
-            return manifest.getMainAttributes().getValue("Main-Class");
-        }
-    }
 
     private static Environment environment;
 
@@ -69,21 +32,7 @@ public final class TSML {
         return environment;
     }
 
-    public static List<String> getNestedPathsFromStream(InputStream jarStream, String prefix) throws IOException {
-        List<String> internalPaths = new ArrayList<>();
-        // Wrap the incoming stream in a JarInputStream to read its entries
-        try (JarInputStream jis = new JarInputStream(jarStream)) {
-            JarEntry entry;
-            while ((entry = jis.getNextJarEntry()) != null) {
-                if (entry.getName().startsWith(prefix + "/") && entry.getName().endsWith(".jar")) {
-                    internalPaths.add(entry.getName());
-                }
-            }
-        }
-        return internalPaths;
-    }
-
-    public static void main(String[] args, URL baseResource) throws Exception {
+    public static void init(String[] args, URL baseResource) throws Exception {
 
         Path rootPath = Path.of("").toAbsolutePath();
 
@@ -95,45 +44,26 @@ public final class TSML {
         List<URL> urls = new ArrayList<>();
         final var modJars = findJarURLs(rootPath.resolve("mods"));
 
-        List<String> allNestedJars = new ArrayList<>();
-
-        // 1. Get the Mod Jars from the Base Resource (Fat Jar)
-    // This will be the list we pass to the TSMLURLClassloader
-        List<NestedJar> nestedJarTree = new ArrayList<>();
-
-        // 1. Get the Top-Level Mod Jars from the Fat Jar
-        List<String> nestedModPaths = JarJarLoader.getNestedJarPaths(List.of(baseResource), "JarJarMods");
-
-        for (String modPath : nestedModPaths) {
-            // Create the parent node for the Mod
-            NestedJar modNode = new NestedJar(modPath, new ArrayList<>());
-
-            // 2. Look inside THIS specific mod for its own nested libraries
-            try (InputStream modStream = TSML.class.getClassLoader().getResourceAsStream(modPath)) {
-                if (modStream != null) {
-                    // Find libraries inside "JarJar/" within "JarJarMods/some-mod.jar"
-                    List<String> modLibs = TSML.getNestedPathsFromStream(modStream, "JarJar");
-
-                    for (String libPath : modLibs) {
-                        // Add the library as a child of the mod
-                        modNode.nestedJars().add(new NestedJar(libPath, new ArrayList<>()));
-                    }
-                }
-            } catch (IOException e) {
-                System.err.println("Failed to scan libraries inside mod: " + modPath);
-            }
-
-            // Add the mod (and its children) to our tree
-            nestedJarTree.add(modNode);
-        }
-
         urls.addAll(modJars);
         urls.add(trivialURL);
 
         final var finalUrls = urls.toArray(new URL[0]);
 
+        final List<NestedJar> nestedJars = new ArrayList<>();
+        nestedJars.addAll(buildNestedJarTree(baseResource));
+
+        modJars.forEach(url -> {
+            try {
+                nestedJars.addAll(buildNestedJarTreeFromMod(url));
+            } catch (IOException | URISyntaxException e) {
+                System.err.println("Failed to build nested jar tree for: " + url);
+                e.printStackTrace();
+            }
+        });
+
+
         ClassLoader currentLoader = Thread.currentThread().getContextClassLoader();
-        try (var tsmlLoader = new TSMLURLClassloader(finalUrls, nestedJarTree, currentLoader)) {
+        try (var tsmlLoader = new TSMLURLClassloader(finalUrls, nestedJars, currentLoader)) {
 
             Thread.currentThread().setContextClassLoader(tsmlLoader);
 
@@ -172,7 +102,7 @@ public final class TSML {
 
             tsmlLoader.init();
 
-            final var path = nestedJarTree
+            final var path = nestedJars
                     .stream()
                     .filter(nestedJar -> nestedJar.jarPath().contains("Mixin"))
                     .findAny()
@@ -194,9 +124,5 @@ public final class TSML {
             Class<?> mainClass = tsmlLoader.loadClass("com.imjustdoom.triviaspire.lwjgl3.Lwjgl3Launcher");
             mainClass.getMethod("main", String[].class).invoke(null, (Object) args);
         }
-    }
-
-    private static String getNestedJarPath(URL rootJar, String jarName) {
-        return rootJar.toString() + "!/" + jarName;
     }
 }

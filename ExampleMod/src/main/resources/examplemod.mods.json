@@ -1,0 +1,7 @@
+{
+  "id": "examplemod",
+  "version": "${version}",
+  "name": "Example Mod",
+  "description": "Example Mod for TriviaSpire Modloader",
+  "entrypoint": "org.mangorage.examplemod.ExampleMod"
+}

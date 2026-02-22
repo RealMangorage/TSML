@@ -6,7 +6,6 @@ import io.github.classgraph.ScanResult;
 import org.mangorage.tsml.TSMLLogger;
 import org.mangorage.tsml.api.IModContainer;
 import org.mangorage.tsml.api.Mod;
-import org.mangorage.tsml.internal.core.BuiltInMod;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
