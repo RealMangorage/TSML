@@ -120,7 +120,7 @@ public final class TSML {
 
             TSMLModloader.initMods();
 
-            Class<?> mainClass = tsmlLoader.loadClass("com.imjustdoom.triviaspire.lwjgl3.Lwjgl3Launcher");
+            Class<?> mainClass = tsmlLoader.loadClass(foundClass);
             mainClass.getMethod("main", String[].class).invoke(null, (Object) args);
         }
     }
