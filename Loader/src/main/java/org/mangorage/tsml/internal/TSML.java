@@ -8,7 +8,6 @@ import org.mangorage.tsml.internal.core.classloader.NestedJar;
 import org.mangorage.tsml.internal.core.mod.TSMLModloader;
 import org.mangorage.tsml.internal.core.TSMLTriviaSpireReflectiveLogger;
 import org.mangorage.tsml.internal.core.classloader.TSMLURLClassloader;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -33,8 +32,8 @@ public final class TSML {
     }
 
     public static void init(String[] args, URL baseResource) throws Exception {
-
         Path rootPath = Path.of("").toAbsolutePath();
+
 
         URL trivialURL = findJarURLs(rootPath).stream()
                 .filter(url -> url.getFile().contains("TriviaSpire"))
