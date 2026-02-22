@@ -1,6 +1,6 @@
 package org.mangorage.tsml;
 
-import org.mangorage.tsml.api.Environment;
+import org.mangorage.tsml.api.misc.Environment;
 
 public final class TSML {
     public static Environment getEnvironment() {

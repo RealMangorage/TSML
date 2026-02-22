@@ -1,7 +1,7 @@
 package org.mangorage.tsmlmixin.mixin.services;
 
 import org.mangorage.tsml.TSMLLogger;
-import org.mangorage.tsml.api.ITSMLClassloader;
+import org.mangorage.tsml.api.classloader.ITSMLClassloader;
 import org.mangorage.tsmlmixin.mixin.SpongeMixinImpl;
 import org.mangorage.tsmlmixin.mixin.core.MixinContainerImpl;
 import org.mangorage.tsmlmixin.mixin.core.MixinLoggerImpl;

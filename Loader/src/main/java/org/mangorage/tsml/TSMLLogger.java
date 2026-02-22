@@ -1,6 +1,6 @@
 package org.mangorage.tsml;
 
-import org.mangorage.tsml.api.ILogger;
+import org.mangorage.tsml.api.logger.ILogger;
 import org.mangorage.tsml.internal.core.TSMLDefaultLogger;
 
 public final class TSMLLogger {

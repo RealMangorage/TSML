@@ -1,5 +1,8 @@
 package org.mangorage.tsml.internal.core.mod;
 
+import org.mangorage.tsml.api.dependency.Dependency;
+
+import java.util.List;
 import java.util.Map;
 
 public record ModInfo(
@@ -8,5 +11,7 @@ public record ModInfo(
         String version,
         String description,
         String mainClass,
+        List<Dependency> dependencies,
+        List<String> authors,
         Map<String, Object> properties
 ) {}

@@ -1,9 +1,9 @@
 package org.mangorage.tsml.internal;
 
 import org.mangorage.tsml.TSMLLogger;
-import org.mangorage.tsml.api.Environment;
-import org.mangorage.tsml.api.ILogger;
-import org.mangorage.tsml.api.IModPreLaunch;
+import org.mangorage.tsml.api.misc.Environment;
+import org.mangorage.tsml.api.logger.ILogger;
+import org.mangorage.tsml.api.mod.IModPreLaunch;
 import org.mangorage.tsml.internal.core.classloader.NestedJar;
 import org.mangorage.tsml.internal.core.mod.TSMLModloader;
 import org.mangorage.tsml.internal.core.TSMLTriviaSpireReflectiveLogger;
@@ -113,15 +113,14 @@ public final class TSML {
                                     baseResource,
                                     path.resourcePath()
                             )
-                    )
+                    ),
+                    foundClass,
+                    args
             );
 
             ServiceLoader.load(IModPreLaunch.class, tsmlLoader).forEach(IModPreLaunch::onPreLaunch);
 
             TSMLModloader.initMods();
-
-            Class<?> mainClass = tsmlLoader.loadClass(foundClass);
-            mainClass.getMethod("main", String[].class).invoke(null, (Object) args);
         }
     }
 }

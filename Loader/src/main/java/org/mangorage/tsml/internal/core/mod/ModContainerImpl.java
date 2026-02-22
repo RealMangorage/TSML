@@ -1,8 +1,10 @@
 package org.mangorage.tsml.internal.core.mod;
 
-import org.mangorage.tsml.api.IModContainer;
+import org.mangorage.tsml.api.dependency.Dependency;
+import org.mangorage.tsml.api.mod.IModContainer;
 
 import java.util.List;
+import java.util.Optional;
 
 public final class ModContainerImpl implements IModContainer {
     private final ModInfo modInfo;
@@ -14,10 +16,9 @@ public final class ModContainerImpl implements IModContainer {
         this.modClass = modClass;
     }
 
-
     void init() {
         try {
-            modClass.getConstructor().newInstance();
+            instance = modClass.getConstructor().newInstance();
         } catch (Throwable e) {
             e.printStackTrace();
         }
@@ -39,6 +40,17 @@ public final class ModContainerImpl implements IModContainer {
     }
 
     @Override
+    public List<Dependency> getDependencies() {
+        return modInfo.dependencies();
+    }
+
+
+    @Override
+    public List<String> getAuthors() {
+        return modInfo.authors();
+    }
+
+    @Override
     public String getName() {
         return modInfo.name();
     }
@@ -49,12 +61,10 @@ public final class ModContainerImpl implements IModContainer {
     }
 
     @Override
-    public <T, D> T getProperty(String property, Class<D> type) {
-        if (modInfo.properties() == null) return null;
-        if (property.equals("mixins") && type == List.class) {
-            return (T) modInfo.properties().get("mixins");
+    public <T> Optional<T> getProperty(String property, Class<T> type) {
+        if (modInfo.properties() == null) {
+            return Optional.empty();
         }
-        return null;
+        return Optional.ofNullable(modInfo.properties().get(property)).filter(type::isInstance).map(type::cast);
     }
-
 }

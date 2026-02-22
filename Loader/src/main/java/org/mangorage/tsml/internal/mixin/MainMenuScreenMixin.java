@@ -6,7 +6,7 @@ import com.github.tommyettinger.textra.TypingLabel;
 import com.imjustdoom.triviaspire.TriviaSpire;
 import com.imjustdoom.triviaspire.screen.BaseScreen;
 import com.imjustdoom.triviaspire.screen.LoadingScreen;
-import org.mangorage.tsml.api.Mods;
+import org.mangorage.tsml.api.mod.Mods;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -27,7 +27,7 @@ public abstract class MainMenuScreenMixin {
             if (rootTable != null) rootTable.remove();
 
             // 2. Initialize the Label
-            injectedLabel = new TypingLabel("TSML v" + Mods.getMod("tsml").getVersion(), TriviaSpire.get().getTextures().getSkin());
+            injectedLabel = new TypingLabel("TSML v" + Mods.getMod("tsml").get().getVersion(), TriviaSpire.get().getTextures().getSkin());
 
             // 3. Create the Container Table
             rootTable = new Table();

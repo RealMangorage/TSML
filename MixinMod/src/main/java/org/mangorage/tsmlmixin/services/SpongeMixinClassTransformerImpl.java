@@ -1,6 +1,6 @@
 package org.mangorage.tsmlmixin.services;
 
-import org.mangorage.tsml.api.IClassTransformer;
+import org.mangorage.tsml.api.classloader.IClassTransformer;
 import org.mangorage.tsmlmixin.mixin.SpongeMixinImpl;
 import org.spongepowered.asm.mixin.MixinEnvironment;
 

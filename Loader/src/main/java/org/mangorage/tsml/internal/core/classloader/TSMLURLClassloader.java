@@ -1,7 +1,7 @@
 package org.mangorage.tsml.internal.core.classloader;
 
-import org.mangorage.tsml.api.IClassTransformer;
-import org.mangorage.tsml.api.ITSMLClassloader;
+import org.mangorage.tsml.api.classloader.IClassTransformer;
+import org.mangorage.tsml.api.classloader.ITSMLClassloader;
 
 import java.io.IOException;
 import java.io.InputStream;

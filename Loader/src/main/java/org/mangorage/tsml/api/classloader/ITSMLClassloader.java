@@ -1,4 +1,4 @@
-package org.mangorage.tsml.api;
+package org.mangorage.tsml.api.classloader;
 
 public interface ITSMLClassloader {
     byte[] getClassBytes(String name);

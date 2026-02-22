@@ -3,5 +3,15 @@
   "version": "${version}",
   "name": "TSMLMixinMod",
   "description": "Mixin mod for TriviaSpireModLoader.",
-  "entrypoint": "org.mangorage.tsmlmixin.mod.TSMLMixinMod"
+  "entrypoint": "org.mangorage.tsmlmixin.mod.TSMLMixinMod",
+  "authors": [
+    "MangoRage"
+  ],
+  "dependencies": [
+    {
+      "id": "tsml",
+      "optional": false,
+      "version": "*"
+    }
+  ]
 }
