@@ -5,6 +5,7 @@ import org.mangorage.tsml.api.Environment;
 import org.mangorage.tsml.api.ILogger;
 import org.mangorage.tsml.api.IModPreLaunch;
 import org.mangorage.tsml.internal.core.JarJarLoader;
+import org.mangorage.tsml.internal.core.NestedJar;
 import org.mangorage.tsml.internal.core.mod.TSMLModloader;
 import org.mangorage.tsml.internal.core.TSMLTriviaSpireReflectiveLogger;
 import org.mangorage.tsml.internal.core.TSMLURLClassloader;
@@ -97,22 +98,33 @@ public final class TSML {
         List<String> allNestedJars = new ArrayList<>();
 
         // 1. Get the Mod Jars from the Base Resource (Fat Jar)
-        List<String> nestedMods = JarJarLoader.getNestedJarPaths(List.of(baseResource), "JarJarMods");
-        allNestedJars.addAll(nestedMods);
+    // This will be the list we pass to the TSMLURLClassloader
+        List<NestedJar> nestedJarTree = new ArrayList<>();
 
-        // 2. FOR EACH MOD: Look inside it for nested libraries
-        for (String modPath : nestedMods) {
-            // We get the stream for the mod jar from the parent loader
-            InputStream modStream = TSML.class.getClassLoader().getResourceAsStream(modPath);
-            if (modStream != null) {
-                // Look for "JarJar/" inside the "JarJarMods/SomeMod.jar"
-                List<String> modLibs = TSML.getNestedPathsFromStream(modStream, "JarJar");
+        // 1. Get the Top-Level Mod Jars from the Fat Jar
+        List<String> nestedModPaths = JarJarLoader.getNestedJarPaths(List.of(baseResource), "JarJarMods");
 
-                // IMPORTANT: The ClassLoader needs a way to resolve these.
-                // If your ClassLoader only looks at the Root Jar, it won't find
-                // "JarJar/lib.jar" inside "JarJarMods/mod.jar" easily.
-                allNestedJars.addAll(modLibs);
+        for (String modPath : nestedModPaths) {
+            // Create the parent node for the Mod
+            NestedJar modNode = new NestedJar(modPath, new ArrayList<>());
+
+            // 2. Look inside THIS specific mod for its own nested libraries
+            try (InputStream modStream = TSML.class.getClassLoader().getResourceAsStream(modPath)) {
+                if (modStream != null) {
+                    // Find libraries inside "JarJar/" within "JarJarMods/some-mod.jar"
+                    List<String> modLibs = TSML.getNestedPathsFromStream(modStream, "JarJar");
+
+                    for (String libPath : modLibs) {
+                        // Add the library as a child of the mod
+                        modNode.nestedJars().add(new NestedJar(libPath, new ArrayList<>()));
+                    }
+                }
+            } catch (IOException e) {
+                System.err.println("Failed to scan libraries inside mod: " + modPath);
             }
+
+            // Add the mod (and its children) to our tree
+            nestedJarTree.add(modNode);
         }
 
         urls.addAll(modJars);
@@ -121,7 +133,7 @@ public final class TSML {
         final var finalUrls = urls.toArray(new URL[0]);
 
         ClassLoader currentLoader = Thread.currentThread().getContextClassLoader();
-        try (var tsmlLoader = new TSMLURLClassloader(finalUrls, allNestedJars, currentLoader)) {
+        try (var tsmlLoader = new TSMLURLClassloader(finalUrls, nestedJarTree, currentLoader)) {
 
             Thread.currentThread().setContextClassLoader(tsmlLoader);
 
@@ -160,10 +172,19 @@ public final class TSML {
 
             tsmlLoader.init();
 
+            final var path = nestedJarTree
+                    .stream()
+                    .filter(nestedJar -> nestedJar.jarPath().contains("Mixin"))
+                    .findAny()
+                    .get();
+
             TSMLModloader.scanMods(
-                    nestedMods.stream()
-                            .map(mod -> getNestedJarPath(baseResource, mod))
-                            .toList()
+                    List.of(
+                            getNestedJarPath(
+                                    baseResource,
+                                    path.jarPath()
+                            )
+                    )
             );
 
             ServiceLoader.load(IModPreLaunch.class, tsmlLoader).forEach(IModPreLaunch::onPreLaunch);

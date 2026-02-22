@@ -25,14 +25,14 @@ import java.util.jar.JarInputStream;
 public final class TSMLURLClassloader extends URLClassLoader implements ITSMLClassloader {
 
     private final List<IClassTransformer> transformers = new ArrayList<>();
-    private final List<String> nestedJarPaths = new ArrayList<>();
+    private final List<NestedJar> nestedJars = new ArrayList<>();
     private final URL[] jarUrls;
 
-    public TSMLURLClassloader(URL[] urls, List<String> nestedJars, ClassLoader parent) {
+    public TSMLURLClassloader(URL[] urls, List<NestedJar> nestedJars, ClassLoader parent) {
         super(urls, parent);
         this.jarUrls = urls;
         if (nestedJars != null) {
-            this.nestedJarPaths.addAll(nestedJars);
+            this.nestedJars.addAll(nestedJars);
         }
     }
 
@@ -88,57 +88,79 @@ public final class TSMLURLClassloader extends URLClassLoader implements ITSMLCla
     public byte[] getNestedClassBytes(String cn) {
         String path = cn.replace('.', '/') + ".class";
 
-        // Try external URLs first (Native URLClassLoader behavior)
+        // Try external URLs first (Native URLClassLoader behavior) via super
         try (InputStream is = super.getResourceAsStream(path)) {
             if (is != null) return is.readAllBytes();
         } catch (IOException ignored) {}
 
-        // Fallback to searching nested JARs
+        // Fallback to searching the NestedJar tree
         return searchNestedJars(path);
     }
 
+    // Update your search entry point
     private byte[] searchNestedJars(String resourcePath) {
-        for (String nestedPath : nestedJarPaths) {
-            try (InputStream jarStream = getParent().getResourceAsStream(nestedPath)) {
-                if (jarStream == null) continue;
-
-                // Start the recursive search
-                byte[] found = searchInStream(jarStream, resourcePath);
-                if (found != null) return found;
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        for (NestedJar node : nestedJars) {
+            byte[] found = searchRecursive(node, resourcePath);
+            if (found != null) return found;
         }
         return null;
     }
 
     /**
-     * Recursively searches a stream. If it finds a .jar, it dives inside it.
+     * Recursive search that follows your NestedJar tree structure.
      */
-    private byte[] searchInStream(InputStream in, String targetPath) throws IOException {
-        JarInputStream jis = new JarInputStream(in);
-        JarEntry entry;
+    private byte[] searchRecursive(NestedJar node, String targetPath) {
+        // 1. Get the stream for the current node (the JAR itself)
+        // If it's a top-level JAR, get from parent. If deeper, this logic needs
+        // to be adjusted to pull from the current stream context.
+        try (InputStream jarStream = getParent().getResourceAsStream(node.jarPath())) {
+            if (jarStream == null) return null;
 
-        while ((entry = jis.getNextJarEntry()) != null) {
-            String name = entry.getName();
+            try (JarInputStream jis = new JarInputStream(jarStream)) {
+                JarEntry entry;
+                while ((entry = jis.getNextJarEntry()) != null) {
+                    String name = entry.getName();
 
-            // 1. Did we find the actual file we want?
-            if (name.equals(targetPath)) {
-                return jis.readAllBytes();
+                    // Check if this entry is the file we want
+                    if (name.equals(targetPath)) {
+                        return jis.readAllBytes();
+                    }
+
+                    // If this entry is one of the nested jars registered in our node
+                    for (NestedJar child : node.nestedJars()) {
+                        if (name.equals(child.jarPath())) {
+                            // Dive into the nested stream
+                            byte[] found = searchInsideNestedStream(jis, child, targetPath);
+                            if (found != null) return found;
+                        }
+                    }
+                }
             }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
-            // 2. Did we find a nested JAR? Dive deeper!
-            if (name.endsWith(".jar")) {
-                // Wrap the stream so the inner JarInputStream doesn't close our outer stream when it finishes
-                InputStream uncloseableStream = new FilterInputStream(jis) {
-                    @Override
-                    public void close() {}
-                };
+    private byte[] searchInsideNestedStream(InputStream parentJis, NestedJar node, String targetPath) throws IOException {
+        // Wrap to prevent closing the parent JarInputStream
+        InputStream shield = new FilterInputStream(parentJis) {
+            @Override public void close() {}
+        };
 
-                byte[] found = searchInStream(uncloseableStream, targetPath);
-                if (found != null) {
-                    return found;
+        try (JarInputStream jis = new JarInputStream(shield)) {
+            JarEntry entry;
+            while ((entry = jis.getNextJarEntry()) != null) {
+                if (entry.getName().equals(targetPath)) {
+                    return jis.readAllBytes();
+                }
+
+                // Recurse further if this node has registered children
+                for (NestedJar child : node.nestedJars()) {
+                    if (entry.getName().equals(child.jarPath())) {
+                        byte[] found = searchInsideNestedStream(jis, child, targetPath);
+                        if (found != null) return found;
+                    }
                 }
             }
         }
@@ -185,10 +207,10 @@ public final class TSMLURLClassloader extends URLClassLoader implements ITSMLCla
         }
 
         // 2. Add resources from our nested JARs
-        for (String nestedPath : nestedJarPaths) {
+        for (var nestedPath : nestedJars) {
             byte[] data = searchNestedJars(name); // Use your existing search logic
             if (data != null) {
-                urls.add(createNestedURL(nestedPath, name, data));
+                urls.add(createNestedURL(nestedPath.jarPath(), name, data));
             }
         }
 
