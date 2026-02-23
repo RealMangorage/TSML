@@ -2,7 +2,7 @@ plugins {
     id 'java'
 }
 
-group = 'org.mangorage.tiab'
+group = 'org.mangorage'
 version = "$TSML_VERSION"
 
 repositories {
@@ -41,7 +41,6 @@ dependencies {
     compileOnly('org.ow2.asm:asm-analysis:9.8')
     compileOnly('org.ow2.asm:asm-tree:9.8')
     compileOnly('org.ow2.asm:asm-commons:9.8')
-
 
     jarJar 'net.fabricmc:sponge-mixin:0.17.0+mixin.0.8.7'
     jarJar 'io.github.llamalad7:mixinextras-common:0.5.3'

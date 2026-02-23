@@ -1,15 +1,9 @@
 package org.mangorage.tsmlmixin.mixin;
 
-
 import com.llamalad7.mixinextras.MixinExtrasBootstrap;
-import org.mangorage.tsml.TSML;
 import org.spongepowered.asm.launch.MixinBootstrap;
-import org.spongepowered.asm.mixin.MixinEnvironment;
 import org.spongepowered.asm.mixin.transformer.IMixinTransformer;
 import org.spongepowered.asm.mixin.transformer.IMixinTransformerFactory;
-import org.spongepowered.asm.service.MixinService;
-
-import java.lang.reflect.Method;
 
 public final class SpongeMixinImpl {
     private static final boolean DEBUG = false;
@@ -40,31 +34,13 @@ public final class SpongeMixinImpl {
             System.setProperty("mixin.checks", "true");
         }
 
-        final var side = switch (TSML.getEnvironment()) {
-            case CLIENT -> MixinEnvironment.Side.CLIENT;
-            case SERVER -> MixinEnvironment.Side.SERVER;
-            case UNKNOWN -> MixinEnvironment.Side.UNKNOWN;
-        };
-
         MixinBootstrap.init();
 
-        completeMixinBootstrap();
-
-       // MixinExtrasBootstrap.init();
-    }
-
-    private static void completeMixinBootstrap() {
-        // Move to the default phase.
-        try {
-            final Method method = MixinEnvironment.class.getDeclaredMethod("gotoPhase", MixinEnvironment.Phase.class);
-            method.setAccessible(true);
-            method.invoke(null, MixinEnvironment.Phase.INIT);
-            method.invoke(null, MixinEnvironment.Phase.DEFAULT);
-        } catch(final Exception exception) {
-            exception.printStackTrace();
-        }
         transformer = factory.createTransformer();
+
+        MixinExtrasBootstrap.init();
     }
+
 }
 
 

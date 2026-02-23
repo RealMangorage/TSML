@@ -24,7 +24,6 @@ configurations {
 
 dependencies {
     jarJarLoader(project(":Loader"))
-
     jarJarMod(project(":MixinMod"))
 }
 

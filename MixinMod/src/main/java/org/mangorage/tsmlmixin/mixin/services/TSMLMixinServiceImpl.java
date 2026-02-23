@@ -20,6 +20,7 @@ import org.spongepowered.asm.service.ITransformer;
 import org.spongepowered.asm.service.ITransformerProvider;
 import org.spongepowered.asm.service.MixinServiceAbstract;
 import org.spongepowered.asm.transformers.MixinClassReader;
+import org.spongepowered.asm.util.IConsumer;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,10 +32,10 @@ import java.util.List;
 public final class TSMLMixinServiceImpl extends MixinServiceAbstract implements IClassProvider, IClassBytecodeProvider, ITransformerProvider, IClassTracker  {
 
     private final MixinContainerImpl container = new MixinContainerImpl("tsmlmixin");
+    private IConsumer<MixinEnvironment.Phase> phaseConsumer;
 
     @Override
     public void prepare() {
-
         super.prepare();
     }
 
@@ -50,6 +51,14 @@ public final class TSMLMixinServiceImpl extends MixinServiceAbstract implements 
             SpongeMixinImpl.setTransformerFactory(getInternal(IMixinTransformerFactory.class));
         }
         super.beginPhase();
+    }
+
+    @Override
+    public void wire(MixinEnvironment.Phase phase, IConsumer<MixinEnvironment.Phase> phaseConsumer) {
+        super.wire(phase, phaseConsumer);
+        if (phase == MixinEnvironment.Phase.PREINIT) {
+            phaseConsumer.accept(MixinEnvironment.Phase.DEFAULT);
+        }
     }
 
     @Override

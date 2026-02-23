@@ -17,7 +17,6 @@ public final class MixinPlatformServiceAgentImpl extends MixinPlatformAgentAbstr
 
     @Override
     public void init() {
-
     }
 
     @Override
