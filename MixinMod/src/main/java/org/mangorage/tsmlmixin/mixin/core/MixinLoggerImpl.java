@@ -1,6 +1,6 @@
 package org.mangorage.tsmlmixin.mixin.core;
 
-import org.mangorage.tsml.TSMLLogger;
+import org.mangorage.tsml.api.TSMLLogger;
 import org.spongepowered.asm.logging.ILogger;
 import org.spongepowered.asm.logging.Level;
 import org.spongepowered.asm.logging.LoggerAdapterAbstract;
@@ -45,7 +45,7 @@ public final class MixinLoggerImpl extends LoggerAdapterAbstract {
 
     @Override
     public <T extends Throwable> T throwing(T t) {
-        TSMLLogger.get().error(t);
+        TSMLLogger.getLogger().error(t);
         return t;
     }
 
@@ -53,21 +53,21 @@ public final class MixinLoggerImpl extends LoggerAdapterAbstract {
 
     private void forwardMessage(Level level, String msg) {
         switch (level) {
-            case DEBUG -> TSMLLogger.get().debug(msg);
-            case INFO  -> TSMLLogger.get().info(msg);
-            case WARN  -> TSMLLogger.get().warn(msg);
-            case ERROR, FATAL -> TSMLLogger.get().error(msg);
-            default -> TSMLLogger.get().info(msg);
+            case DEBUG -> TSMLLogger.getLogger().debug(msg);
+            case INFO  -> TSMLLogger.getLogger().info(msg);
+            case WARN  -> TSMLLogger.getLogger().warn(msg);
+            case ERROR, FATAL -> TSMLLogger.getLogger().error(msg);
+            default -> TSMLLogger.getLogger().info(msg);
         }
     }
 
     private void forwardThrowable(Level level, Throwable t) {
         switch (level) {
-            case DEBUG -> TSMLLogger.get().debug(t);
-            case INFO  -> TSMLLogger.get().info(t);
-            case WARN  -> TSMLLogger.get().warn(t);
-            case ERROR, FATAL -> TSMLLogger.get().error(t);
-            default -> TSMLLogger.get().error(t);
+            case DEBUG -> TSMLLogger.getLogger().debug(t);
+            case INFO  -> TSMLLogger.getLogger().info(t);
+            case WARN  -> TSMLLogger.getLogger().warn(t);
+            case ERROR, FATAL -> TSMLLogger.getLogger().error(t);
+            default -> TSMLLogger.getLogger().error(t);
         }
     }
 

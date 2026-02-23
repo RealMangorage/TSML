@@ -1,10 +1,11 @@
 package org.mangorage.tsml.internal.core;
 
-import org.mangorage.tsml.api.logger.ILogger;
+
+import org.mangorage.tsml.api.logger.ILoaderLogger;
 
 import java.lang.reflect.Method;
 
-public final class TSMLTriviaSpireReflectiveLogger implements ILogger {
+public final class TSMLTriviaSpireReflectiveLogger implements ILoaderLogger {
     private final Class<?> delegate;
 
     public TSMLTriviaSpireReflectiveLogger(Class<?> delegate) {

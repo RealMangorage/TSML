@@ -1,6 +1,6 @@
 package org.mangorage.tsmlmixin.mixin.services;
 
-import org.mangorage.tsml.TSMLLogger;
+import org.mangorage.tsml.api.TSMLLogger;
 import org.spongepowered.asm.service.IMixinServiceBootstrap;
 
 public final class MixinBootstrapServiceImpl implements IMixinServiceBootstrap {
@@ -16,6 +16,6 @@ public final class MixinBootstrapServiceImpl implements IMixinServiceBootstrap {
 
     @Override
     public void bootstrap() {
-        TSMLLogger.get().info("MixinBootstrapServiceImpl.bootstrap() called");
+        TSMLLogger.getLogger().info("MixinBootstrapServiceImpl.bootstrap() called");
     }
 }

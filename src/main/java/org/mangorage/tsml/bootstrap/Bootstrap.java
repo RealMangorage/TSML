@@ -1,5 +1,7 @@
 package org.mangorage.tsml.bootstrap;
 
+import org.mangorage.tsml.bootstrap.internal.TSMLDefaultLogger;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -27,12 +29,25 @@ public final class Bootstrap {
     public static void main(String[] args) throws Exception {
         URL bootstrapJar = Bootstrap.class.getProtectionDomain().getCodeSource().getLocation();
 
+        TSMLDefaultLogger.getInstance().info("Bootstrap jar URL: " + bootstrapJar);
+        TSMLDefaultLogger.getInstance().info("Extracting nested jars from bootstrap jar...");
+        TSMLDefaultLogger.getInstance().info("Looking for entries in JarJarLoader/ that end with .jar");
+        TSMLDefaultLogger.getInstance().info("This may take a moment...");
+
         final var list = getNestedPathsFromStream(bootstrapJar.openStream(), "JarJarLoader");
+
+        TSMLDefaultLogger.getInstance().info("Found " + list.size() + " nested jars:");
+        TSMLDefaultLogger.getInstance().info("Creating classloader and starting TSML...");
 
         try (final var urlClassloader = new BootstrapURLClassloader(new URL[]{bootstrapJar}, list, Bootstrap.class.getClassLoader())) {
             Thread.currentThread().setContextClassLoader(urlClassloader);
             final var mainClass = Class.forName("org.mangorage.tsml.internal.TSML", true, urlClassloader);
-            mainClass.getMethod("init", String[].class, URL.class).invoke(null, (Object) args, bootstrapJar);
+            final var method = mainClass.getMethod("initPublic", String[].class, URL.class);
+            method.setAccessible(true);
+            method.invoke(null, (Object) args, bootstrapJar);
+        } catch (Throwable e) {
+            TSMLDefaultLogger.getInstance().error("Failed to start TSML:");
+            TSMLDefaultLogger.getInstance().error(e);
         }
     }
 }

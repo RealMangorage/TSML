@@ -21,8 +21,8 @@ artifacts {
 }
 
 dependencies {
-    compileOnly files('/build/run/TriviaSpire-1.0.0.jar')
-    compileOnly files("/build/run/TriviaSpire-Server-1.0.0.jar")
+    compileOnly project(":")
+    compileOnly rootProject.files("build/run/TriviaSpire-1.0.0.jar")
 
     compileOnly('net.fabricmc:sponge-mixin:0.17.0+mixin.0.8.7')
     compileOnly('io.github.llamalad7:mixinextras-common:0.5.3')

@@ -1,8 +1,8 @@
 package org.mangorage.tsml.internal;
 
-import org.mangorage.tsml.TSMLLogger;
+import org.mangorage.tsml.api.TSMLLogger;
+import org.mangorage.tsml.api.logger.ILoaderLogger;
 import org.mangorage.tsml.api.misc.Environment;
-import org.mangorage.tsml.api.logger.ILogger;
 import org.mangorage.tsml.api.mod.IModPreLaunch;
 import org.mangorage.tsml.internal.core.classloader.NestedJar;
 import org.mangorage.tsml.internal.core.mod.TSMLModloader;
@@ -25,38 +25,65 @@ import static org.mangorage.tsml.internal.core.util.Util.*;
  */
 public final class TSML {
 
+    private static boolean loaded = false;
+
+    private static ILoaderLogger activeLogger = null;
+
+    static void setActiveLogger(ILoaderLogger logger) {
+        activeLogger = logger;
+    }
+
+    public static ILoaderLogger getActiveLogger() {
+        return activeLogger;
+    }
+
     private static Environment environment;
 
     public static Environment getEnvironment() {
         return environment;
     }
 
-    public static void init(String[] args, URL baseResource) throws Exception {
-        Path rootPath = Path.of("").toAbsolutePath();
+    public static void initPublic(String[] args, URL baseResource) throws Exception {
+        if (loaded) {
+            TSMLLogger.getInternal().warn("TSML is already initialized, skipping");
+            return;
+        }
 
+        loaded = true;
+
+        try {
+            init(args, baseResource);
+        } catch (Exception e) {
+            TSMLLogger.getInternal().error("Failed to initialize TSML");
+            TSMLLogger.getInternal().error(e);
+            throw e;
+        }
+    }
+
+    static void init(String[] args, URL baseResource) throws Exception {
+        Path rootPath = Path.of("").toAbsolutePath();
 
         URL trivialURL = findJarURLs(rootPath).stream()
                 .filter(url -> url.getFile().contains("TriviaSpire"))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("Could not find TriviaSpire.jar in root folder"));
 
-        List<URL> urls = new ArrayList<>();
         final var modJars = findJarURLs(rootPath.resolve("mods"));
 
-        urls.addAll(modJars);
+        List<URL> urls = new ArrayList<>(modJars);
         urls.add(trivialURL);
 
         final var finalUrls = urls.toArray(new URL[0]);
 
-        final List<NestedJar> nestedJars = new ArrayList<>();
-        nestedJars.addAll(buildNestedJarTree(baseResource));
+        final List<NestedJar> nestedJars = new ArrayList<>(buildNestedJarTree(baseResource));
 
         modJars.forEach(url -> {
             try {
                 nestedJars.addAll(buildNestedJarTreeFromMod(url));
+                TSMLLogger.getInternal().info("Built nested jar tree for mod: " + url);
             } catch (IOException | URISyntaxException e) {
-                System.err.println("Failed to build nested jar tree for: " + url);
-                e.printStackTrace();
+                TSMLLogger.getInternal().error("Failed to build nested jar tree for: " + url);
+                TSMLLogger.getInternal().error(e);
             }
         });
 
@@ -66,6 +93,13 @@ public final class TSML {
 
             Thread.currentThread().setContextClassLoader(tsmlLoader);
 
+            /**
+             * No idea why,
+             * but we need
+             * to do this so we don't get a {@link NoClassDefFoundError} Exception when exiting game
+              */
+            Class.forName("org.tinylog.converters.GzipEncoder", false, tsmlLoader);
+
             final var clientClass = "com.imjustdoom.triviaspire.lwjgl3.Lwjgl3Launcher";
             final var serverClass = "com.imjustdoom.triviaspire.server.ServerLauncher";
             final var foundClass = getMainClass(new File(trivialURL.toURI()));
@@ -73,30 +107,33 @@ public final class TSML {
             final var triviaLogger = tsmlLoader.loadClass("com.imjustdoom.triviaspire.shared.TriviaLogger");
             final var triviaSpireReflectiveLogger = new TSMLTriviaSpireReflectiveLogger(triviaLogger);
 
-            TSMLLogger.setActiveLogger(triviaSpireReflectiveLogger);
+            /**
+             * Can now use {@link TSMLLogger#getLogger()}
+             */
+            setActiveLogger(triviaSpireReflectiveLogger);
 
-            TSMLLogger.get().info("Started TriviaSpire ModLoader");
+            TSMLLogger.getLogger().info("Started TriviaSpire ModLoader");
 
             if (foundClass.equals(clientClass)) {
-                TSMLLogger.get().info("Detected client environment");
+                TSMLLogger.getLogger().info("Detected client environment");
                 environment = Environment.CLIENT;
             } else if (foundClass.equals(serverClass)) {
-                TSMLLogger.get().info("Detected server environment");
+                TSMLLogger.getLogger().info("Detected server environment");
                 environment = Environment.SERVER;
             } else {
-                TSMLLogger.get().warn("Could not detect environment, found main class: " + foundClass);
+                TSMLLogger.getLogger().warn("Could not detect environment, found main class: " + foundClass);
                 environment = Environment.UNKNOWN;
             }
 
-            ServiceLoader.load(ILogger.class, tsmlLoader).stream()
+            ServiceLoader.load(ILoaderLogger.class, tsmlLoader).stream()
                     .limit(1)
                     .findAny()
                     .ifPresentOrElse(provider -> {
-                        TSMLLogger.setActiveLogger(provider.get());
-                        TSMLLogger.get().info("Found custom logger provider: " + provider.type());
-                        TSMLLogger.get().info("Using custom logger");
+                        setActiveLogger(provider.get());
+                        TSMLLogger.getLogger().info("Found custom logger provider: " + provider.type());
+                        TSMLLogger.getLogger().info("Using custom logger");
                     }, () -> {
-                        TSMLLogger.get().warn("No custom logger provider found, using default logger");
+                        TSMLLogger.getLogger().warn("No custom logger provider found, using default logger");
                     });
 
             tsmlLoader.init();

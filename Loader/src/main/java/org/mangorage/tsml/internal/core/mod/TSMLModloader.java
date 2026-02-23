@@ -3,7 +3,7 @@ package org.mangorage.tsml.internal.core.mod;
 import com.google.gson.Gson;
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ScanResult;
-import org.mangorage.tsml.TSMLLogger;
+import org.mangorage.tsml.api.TSMLLogger;
 import org.mangorage.tsml.api.dependency.Dependency;
 import org.mangorage.tsml.api.mod.IModContainer;
 import org.mangorage.tsml.api.mod.Mod;
@@ -79,7 +79,7 @@ public final class TSMLModloader {
     }
 
     public static void scanMods(List<String> nestedJars, String mainClass, String[] args) {
-        TSMLLogger.get().info("Scanning for mods...");
+        TSMLLogger.getInternal().info("Scanning for mods...");
 
         modContainerMap.put(
                 "trivia-spire",
@@ -114,20 +114,20 @@ public final class TSMLModloader {
             scanResult
                     .getClassesWithAnnotation(Mod.class)
                     .forEach(classInfo -> {
-                        TSMLLogger.get().info("Discovered: " + classInfo.getName());
+                        TSMLLogger.getInternal().info("Discovered: " + classInfo.getName());
                         final var id = classInfo.getAnnotationInfo(Mod.class.getName()).getParameterValues().getValue("id").toString();
                         ModInfo modInfo = getModInfo(id);
                         if (modInfo == null) {
-                            TSMLLogger.get().error("Failed to load mod metadata for " + id);
+                            TSMLLogger.getInternal().error("Failed to load mod metadata for " + id);
                         } else {
                             try {
                                 Class<?> modClass = classInfo.loadClass();
                                 IModContainer container = new ModContainerImpl(modInfo, modClass);
                                 modContainerMap.put(id, container);
-                                TSMLLogger.get().info("Loaded mod: " + modInfo.name());
+                                TSMLLogger.getInternal().info("Loaded mod: " + modInfo.name());
                             } catch (Throwable e) {
-                                TSMLLogger.get().warn("Failed to load mod class for " + id);
-                                TSMLLogger.get().error(e);
+                                TSMLLogger.getInternal().warn("Failed to load mod class for " + id);
+                                TSMLLogger.getInternal().error(e);
                             }
                         }
                     });
@@ -135,20 +135,20 @@ public final class TSMLModloader {
     }
 
     public static void printDependencyGraph() {
-        TSMLLogger.get().info("=== Mod Dependency Graph ===");
+        TSMLLogger.getInternal().info("=== Mod Dependency Graph ===");
         modContainerMap.forEach((id, mod) -> {
             List<Dependency> deps = mod.getDependencies();
             if (deps == null || deps.isEmpty()) {
-                TSMLLogger.get().info(id + " -> [none]");
+                TSMLLogger.getInternal().info(id + " -> [none]");
             } else {
                 String depList = deps.stream()
                         .map(d -> d.id() + (d.optional() ? " (optional)" : ""))
                         .reduce((a, b) -> a + ", " + b)
                         .orElse("");
-                TSMLLogger.get().info(id + " -> [" + depList + "]");
+                TSMLLogger.getInternal().info(id + " -> [" + depList + "]");
             }
         });
-        TSMLLogger.get().info("============================");
+        TSMLLogger.getInternal().info("============================");
     }
 
     public static void initMods() {
@@ -170,7 +170,7 @@ public final class TSMLModloader {
         // Topological sort to determine load order
         List<String> sorted = topologicalSort(graph);
         if (sorted == null) {
-            TSMLLogger.get().error("Failed to sort mods by dependencies (circular dependency detected).");
+            TSMLLogger.getInternal().error("Failed to sort mods by dependencies (circular dependency detected).");
             return;
         }
 
@@ -184,7 +184,7 @@ public final class TSMLModloader {
             if (deps != null) {
                 for (Dependency dep : deps) {
                     if (!dep.optional() && !modContainerMap.containsKey(dep.id())) {
-                        TSMLLogger.get().warn("Skipping mod " + id + " because required dependency is missing: " + dep.id());
+                        TSMLLogger.getInternal().warn("Skipping mod " + id + " because required dependency is missing: " + dep.id());
                         canLoad = false;
                         break;
                     }
@@ -194,13 +194,13 @@ public final class TSMLModloader {
             if (!canLoad) continue;
 
             // Initialize
-            TSMLLogger.get().info("Initializing mod: " + id);
+            TSMLLogger.getInternal().info("Initializing mod: " + id);
             try {
                 ((ModContainerImpl) mod).init();
-                TSMLLogger.get().info("Initialized mod: " + id);
+                TSMLLogger.getInternal().info("Initialized mod: " + id);
             } catch (Throwable e) {
-                TSMLLogger.get().warn("Failed to initialize mod: " + id);
-                TSMLLogger.get().error(e);
+                TSMLLogger.getInternal().warn("Failed to initialize mod: " + id);
+                TSMLLogger.getInternal().error(e);
             }
         }
     }
@@ -227,7 +227,7 @@ public final class TSMLModloader {
         tempMark.add(node);
         for (String dep : graph.getOrDefault(node, Collections.emptyList())) {
             if (!modContainerMap.containsKey(dep)) {
-                TSMLLogger.get().warn("Mod " + node + " depends on missing mod: " + dep);
+                TSMLLogger.getInternal().warn("Mod " + node + " depends on missing mod: " + dep);
                 continue;
             }
             if (!visit(dep, graph, visited, tempMark, result)) return false;

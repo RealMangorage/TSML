@@ -1,4 +1,4 @@
-package org.mangorage.tsml.api.logger;
+package org.mangorage.tsml.bootstrap.api.logger;
 
 public interface ILogger {
     // Simple message logging

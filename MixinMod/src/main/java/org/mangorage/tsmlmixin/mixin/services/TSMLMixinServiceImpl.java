@@ -1,6 +1,6 @@
 package org.mangorage.tsmlmixin.mixin.services;
 
-import org.mangorage.tsml.TSMLLogger;
+import org.mangorage.tsml.api.TSMLLogger;
 import org.mangorage.tsml.api.classloader.ITSMLClassloader;
 import org.mangorage.tsmlmixin.mixin.SpongeMixinImpl;
 import org.mangorage.tsmlmixin.mixin.core.MixinContainerImpl;
@@ -45,7 +45,7 @@ public final class TSMLMixinServiceImpl extends MixinServiceAbstract implements 
 
     @Override
     public void beginPhase() {
-        TSMLLogger.get().info("Beginning Mixin Phase: " + MixinEnvironment.getCurrentEnvironment().getPhase());
+        TSMLLogger.getLogger().info("Beginning Mixin Phase: " + MixinEnvironment.getCurrentEnvironment().getPhase());
         if (MixinEnvironment.getCurrentEnvironment().getPhase() == MixinEnvironment.Phase.PREINIT) {
             SpongeMixinImpl.setTransformerFactory(getInternal(IMixinTransformerFactory.class));
         }
