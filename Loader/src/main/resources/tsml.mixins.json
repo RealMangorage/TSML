@@ -5,6 +5,7 @@
   "compatibilityLevel": "JAVA_17",
   "mixins": [
     "MainMenuScreenMixin",
-    "Lwjgl3LauncherMixin"
+    "Lwjgl3LauncherMixin",
+    "SharedBridgeJsonCoreMixin"
   ]
 }

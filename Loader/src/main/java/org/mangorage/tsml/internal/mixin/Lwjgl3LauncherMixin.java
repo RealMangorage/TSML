@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Lwjgl3Launcher.class)
-public class Lwjgl3LauncherMixin {
+public final class Lwjgl3LauncherMixin {
 
     @Inject(
             method = "getDefaultConfiguration",
