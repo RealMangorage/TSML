@@ -1,5 +1,6 @@
 package org.mangorage.tsmlmixin.mixin;
 
+
 import com.llamalad7.mixinextras.MixinExtrasBootstrap;
 import org.mangorage.tsml.TSML;
 import org.spongepowered.asm.launch.MixinBootstrap;
@@ -49,7 +50,7 @@ public final class SpongeMixinImpl {
 
         completeMixinBootstrap();
 
-        MixinExtrasBootstrap.init();
+       // MixinExtrasBootstrap.init();
     }
 
     private static void completeMixinBootstrap() {

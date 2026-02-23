@@ -24,6 +24,7 @@ configurations {
 
 dependencies {
     jarJarLoader(project(":Loader"))
+
     jarJarMod(project(":MixinMod"))
 }
 
@@ -103,6 +104,12 @@ tasks.register('runGame', JavaExec) {
     doFirst {
         workingDir.mkdirs()
     }
+
+    // Use Java 17 JRE
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+
 
     // optional JVM args, because games like memory
     jvmArgs '-Xms512M', '-Xmx2G'

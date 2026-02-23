@@ -4,6 +4,7 @@ import org.mangorage.tsml.bootstrap.internal.TSMLDefaultLogger;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,12 +43,24 @@ public final class Bootstrap {
         try (final var urlClassloader = new BootstrapURLClassloader(new URL[]{bootstrapJar}, list, Bootstrap.class.getClassLoader())) {
             Thread.currentThread().setContextClassLoader(urlClassloader);
             final var mainClass = Class.forName("org.mangorage.tsml.internal.TSML", true, urlClassloader);
+            TSMLDefaultLogger.getInstance().info("Found TSML main class: " + mainClass);
+            TSMLDefaultLogger.getInstance().info(mainClass.getName());
+
+            for (Method method : mainClass.getMethods()) {
+                TSMLDefaultLogger.getInstance().info("Method: " + method);
+            }
+
+            TSMLDefaultLogger.getInstance().info("Looking for initPublic method...");
             final var method = mainClass.getMethod("initPublic", String[].class, URL.class);
-            method.setAccessible(true);
+            TSMLDefaultLogger.getInstance().info("Invoking TSML initPublic method...");
+            TSMLDefaultLogger.getInstance().info(method.toString());
             method.invoke(null, (Object) args, bootstrapJar);
         } catch (Throwable e) {
             TSMLDefaultLogger.getInstance().error("Failed to start TSML:");
             TSMLDefaultLogger.getInstance().error(e);
+            for (StackTraceElement stackTraceElement : e.getStackTrace()) {
+                TSMLDefaultLogger.getInstance().error("\t" + stackTraceElement);
+            }
         }
     }
 }

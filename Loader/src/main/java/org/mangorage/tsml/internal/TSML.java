@@ -64,6 +64,7 @@ public final class TSML {
         Path rootPath = Path.of("").toAbsolutePath();
 
         URL trivialURL = findJarURLs(rootPath).stream()
+                .filter(url -> url.getFile().endsWith(".jar"))
                 .filter(url -> url.getFile().contains("TriviaSpire"))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("Could not find TriviaSpire.jar in root folder"));
