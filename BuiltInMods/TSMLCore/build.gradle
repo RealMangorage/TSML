@@ -3,7 +3,7 @@ plugins {
 }
 
 group = 'org.mangorage'
-version = '0.0.15'
+version = "$TSML_VERSION"
 
 repositories {
     mavenCentral()
