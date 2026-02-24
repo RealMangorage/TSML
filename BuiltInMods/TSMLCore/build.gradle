@@ -1,0 +1,27 @@
+plugins {
+    id 'java'
+}
+
+group = 'org.mangorage'
+version = '0.0.15'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compileOnly rootProject.project(":Loader")
+    compileOnly rootProject.files("build/run/TriviaSpire-1.0.0.jar")
+
+    compileOnly('net.fabricmc:sponge-mixin:0.17.0+mixin.0.8.7')
+    compileOnly('io.github.llamalad7:mixinextras-common:0.5.3')
+}
+
+processResources {
+    // This tells Gradle: "If the version changes, this task is dirty"
+    inputs.property "version", project.version
+
+    filesMatching("tsmlcore.mods.json") {
+        expand "version": project.version
+    }
+}

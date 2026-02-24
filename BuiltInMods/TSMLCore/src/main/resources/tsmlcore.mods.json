@@ -1,0 +1,15 @@
+{
+  "id": "tsmlcore",
+  "version": "${version}",
+  "name": "TSML Core",
+  "description": "TSMLCore - Built-in mod for TSML",
+  "entrypoint": "org.mangorage.tsmlcore.TSMLCoreMod",
+  "authors": [
+    "MangoRage"
+  ],
+  "properties": {
+    "mixins": [
+      "tsmlcore.mixins.json"
+    ]
+  }
+}

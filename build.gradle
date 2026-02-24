@@ -25,6 +25,7 @@ configurations {
 dependencies {
     jarJarLoader(project(":Loader"))
     jarJarMod(project(":BuiltInMods:TSMLMixin"))
+    jarJarMod(project(":BuiltInMods:TSMLCore"))
 }
 
 application {

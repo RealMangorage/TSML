@@ -1,4 +1,4 @@
-package org.mangorage.tsml.internal.mixin.client;
+package org.mangorage.tsmlcore.mixin;
 
 import com.imjustdoom.triviaspire.SharedBridgeJsonCore;
 import org.spongepowered.asm.mixin.Mixin;

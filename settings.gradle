@@ -3,4 +3,6 @@ include 'Loader'
 include 'ExampleMod'
 include 'BuiltInMods'
 include 'BuiltInMods:TSMLMixin'
+include 'BuiltInMods:TSMLCore'
+findProject(':BuiltInMods:TSMLCore')?.name = 'TSMLCore'
 

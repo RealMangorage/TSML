@@ -139,22 +139,12 @@ public final class TSML {
 
             tsmlLoader.init();
 
-            final var path = nestedJars
+            final var paths = nestedJars
                     .stream()
-                    .filter(nestedJar -> nestedJar.resourcePath().contains("Mixin"))
-                    .findAny()
-                    .get();
+                    .map(NestedJar::getFullPath)
+                    .toList();
 
-            TSMLModloader.scanMods(
-                    List.of(
-                            getNestedJarPath(
-                                    baseResource,
-                                    path.resourcePath()
-                            )
-                    ),
-                    foundClass,
-                    args
-            );
+            TSMLModloader.scanMods(paths, foundClass, args);
 
             ServiceLoader.load(IModPreLaunch.class, tsmlLoader).forEach(IModPreLaunch::onPreLaunch);
 
