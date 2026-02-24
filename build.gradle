@@ -3,7 +3,7 @@ plugins {
     id 'application'
 }
 
-group = 'org.mangorage.tiab'
+group = 'org.mangorage'
 version = "$TSML_VERSION"
 
 repositories {
@@ -24,7 +24,7 @@ configurations {
 
 dependencies {
     jarJarLoader(project(":Loader"))
-    jarJarMod(project(":MixinMod"))
+    jarJarMod(project(":BuiltInMods:TSMLMixin"))
 }
 
 application {
