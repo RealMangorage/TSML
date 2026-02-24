@@ -3,6 +3,7 @@ package org.mangorage.tsmlmixin.services;
 import org.mangorage.tsml.api.classloader.IClassTransformer;
 import org.mangorage.tsmlmixin.mixin.SpongeMixinImpl;
 import org.spongepowered.asm.mixin.MixinEnvironment;
+import org.spongepowered.asm.mixin.transformer.IMixinTransformer;
 
 import java.util.List;
 
@@ -39,6 +40,11 @@ public final class SpongeMixinClassTransformerImpl implements IClassTransformer 
         } else {
             return null;
         }
+    }
+
+    @Override
+    public byte[] generateClass(String name) {
+        return ((IMixinTransformer)MixinEnvironment.getCurrentEnvironment().getActiveTransformer()).generateClass(MixinEnvironment.getCurrentEnvironment(), name);
     }
 
     public static boolean areByteArraysEqual(byte[] a, byte[] b) {

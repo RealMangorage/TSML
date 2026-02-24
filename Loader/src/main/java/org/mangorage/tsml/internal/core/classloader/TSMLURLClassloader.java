@@ -36,7 +36,7 @@ public final class TSMLURLClassloader extends java.net.URLClassLoader implements
 
         // Get class bytes + code source
         ClassBytesWithCodeSource cs = nestedJarHandler.getNestedClassBytes(name);
-        byte[] classBytes;
+        byte[] classBytes = null;
         URL originUrl;
 
         if (cs != null) {
@@ -45,8 +45,19 @@ public final class TSMLURLClassloader extends java.net.URLClassLoader implements
         } else {
             // fallback: try standard classloader
             try (InputStream is = getResourceAsStream(name.replace('.', '/') + ".class")) {
-                if (is == null) throw new ClassNotFoundException(name);
-                classBytes = is.readAllBytes();
+                if (is == null) {
+                    for (IClassTransformer transformer : transformers) {
+                        final var byteArray = transformer.generateClass(name);
+                        if (byteArray != null) {
+                            classBytes = byteArray;
+                            break;
+                        }
+                    }
+                    if (classBytes == null)
+                        throw new ClassNotFoundException(name);
+                } else {
+                    classBytes = is.readAllBytes();
+                }
             } catch (IOException e) {
                 throw new ClassNotFoundException(name, e);
             }
@@ -69,7 +80,10 @@ public final class TSMLURLClassloader extends java.net.URLClassLoader implements
         CodeSource codeSource = originUrl != null ? new CodeSource(originUrl, (Certificate[]) null) : null;
         ProtectionDomain pd = new ProtectionDomain(codeSource, null, this, null);
 
-        return defineClass(name, classBytes, 0, classBytes.length, pd);
+        final var clazz = defineClass(name, classBytes, 0, classBytes.length, pd);
+        if (clazz == null)
+            throw new ClassFormatError("Failed to define class: " + name);
+        return clazz;
     }
 
     @Override
