@@ -1,4 +1,4 @@
-package org.mangorage.tsml.internal.mixin;
+package org.mangorage.tsml.internal.mixin.client;
 
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(BaseScreen.class)
-public abstract class MainMenuScreenMixin {
+public abstract class BaseScreenMixin {
     private TypingLabel injectedLabel;
     private Table rootTable; // Store the table so we can clean it up
 

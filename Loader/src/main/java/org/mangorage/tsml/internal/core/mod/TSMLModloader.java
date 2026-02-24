@@ -7,6 +7,7 @@ import org.mangorage.tsml.api.TSMLLogger;
 import org.mangorage.tsml.api.dependency.Dependency;
 import org.mangorage.tsml.api.mod.IModContainer;
 import org.mangorage.tsml.api.mod.Mod;
+import org.mangorage.tsml.internal.mod.BuiltInMod;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;

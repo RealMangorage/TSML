@@ -1,4 +1,4 @@
-package org.mangorage.tsml.internal.core.mod;
+package org.mangorage.tsml.internal.mod;
 
 import org.mangorage.tsml.api.mod.Mod;
 

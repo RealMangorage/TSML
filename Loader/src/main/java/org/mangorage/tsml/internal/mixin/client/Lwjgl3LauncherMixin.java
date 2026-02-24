@@ -1,4 +1,4 @@
-package org.mangorage.tsml.internal.mixin;
+package org.mangorage.tsml.internal.mixin.client;
 
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
 import com.imjustdoom.triviaspire.lwjgl3.Lwjgl3Launcher;

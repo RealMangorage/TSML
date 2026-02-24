@@ -12,6 +12,7 @@ import org.spongepowered.asm.launch.platform.container.IContainerHandle;
 import org.spongepowered.asm.logging.ILogger;
 import org.spongepowered.asm.mixin.MixinEnvironment;
 import org.spongepowered.asm.mixin.transformer.IMixinTransformerFactory;
+import org.spongepowered.asm.mixin.transformer.ext.IClassGenerator;
 import org.spongepowered.asm.service.IClassBytecodeProvider;
 import org.spongepowered.asm.service.IClassProvider;
 import org.spongepowered.asm.service.IClassTracker;
@@ -32,7 +33,6 @@ import java.util.List;
 public final class TSMLMixinServiceImpl extends MixinServiceAbstract implements IClassProvider, IClassBytecodeProvider, ITransformerProvider, IClassTracker  {
 
     private final MixinContainerImpl container = new MixinContainerImpl("tsmlmixin");
-    private IConsumer<MixinEnvironment.Phase> phaseConsumer;
 
     @Override
     public void prepare() {
@@ -173,7 +173,7 @@ public final class TSMLMixinServiceImpl extends MixinServiceAbstract implements 
         return classNode(canonicalName, internalName, classBytes, readerFlags);
     }
 
-    public ClassNode classNode(final String canonicalName, final String internalName, final byte[] input, final int readerFlags) throws ClassNotFoundException {
+    ClassNode classNode(final String canonicalName, final String internalName, final byte[] input, final int readerFlags) throws ClassNotFoundException {
         if (input.length != 0) {
             final ClassNode node = new ClassNode(Opcodes.ASM9);
             final ClassReader reader = new MixinClassReader(input, canonicalName);

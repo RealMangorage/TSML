@@ -54,7 +54,6 @@ public final class MixinLoggerImpl extends LoggerAdapterAbstract {
     private void forwardMessage(Level level, String msg) {
         switch (level) {
             case DEBUG -> TSMLLogger.getLogger().debug(msg);
-            case INFO  -> TSMLLogger.getLogger().info(msg);
             case WARN  -> TSMLLogger.getLogger().warn(msg);
             case ERROR, FATAL -> TSMLLogger.getLogger().error(msg);
             default -> TSMLLogger.getLogger().info(msg);
@@ -66,7 +65,6 @@ public final class MixinLoggerImpl extends LoggerAdapterAbstract {
             case DEBUG -> TSMLLogger.getLogger().debug(t);
             case INFO  -> TSMLLogger.getLogger().info(t);
             case WARN  -> TSMLLogger.getLogger().warn(t);
-            case ERROR, FATAL -> TSMLLogger.getLogger().error(t);
             default -> TSMLLogger.getLogger().error(t);
         }
     }
