@@ -57,7 +57,7 @@ processResources {
     // This tells Gradle: "If the version changes, this task is dirty"
     inputs.property "version", project.version
 
-    filesMatching("tsml.mods.json") {
+    filesMatching("tsmlmixin.mods.json") {
         expand "version": project.version
     }
 }

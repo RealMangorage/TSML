@@ -1,11 +1,15 @@
 package org.mangorage.tsmlcore.mixin;
 
+import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.imjustdoom.triviaspire.TriviaSpire;
 import com.imjustdoom.triviaspire.register.UiElements;
 import com.imjustdoom.triviaspire.screen.BaseScreen;
 import com.imjustdoom.triviaspire.screen.MainMenuScreen;
+import de.eskalon.commons.screen.transition.impl.SlidingDirection;
+import de.eskalon.commons.screen.transition.impl.SlidingOutTransition;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -38,12 +42,16 @@ public abstract class MainMenuScreenMixin {
                 @Override
                 public void clicked(InputEvent event, float x, float y) {
                     System.out.println("Custom icon button clicked!");
+                    TriviaSpire.get()
+                            .setScreen(
+                                    new org.mangorage.tsmlcore.screen.ModMenuScreen(),
+                                    new SlidingOutTransition(TriviaSpire.get().getScreenBatch(), SlidingDirection.DOWN, 3, Interpolation.slowFast)
+                            );
                 }
             });
 
             // 3. Add to the stage and register hover effect
             screen.getStage().addActor(this.myCustomIconButton);
-
 
         } catch (Exception e) {
             e.printStackTrace();
