@@ -1,13 +1,13 @@
-package org.mangorage.tsml.internal.core.mod;
+package org.mangorage.tsml.internal.core.modloading;
 
 import org.mangorage.tsml.api.TSMLLogger;
-import org.mangorage.tsml.api.mod.Mods;
+import org.mangorage.tsml.api.mod.TSMLLoaderAPI;
 
 import java.lang.reflect.InvocationTargetException;
 
 public final class TriviaSpireMod {
     public TriviaSpireMod() {
-        Mods.getMod("trivia-spire").ifPresent(mod -> {
+        TSMLLoaderAPI.getMod("trivia-spire").ifPresent(mod -> {
             TSMLLogger.getInternal().info("Trivia Spire mod found: " + mod.getName());
             TSMLLogger.getInternal().info("Starting TriviaSpire");
 

@@ -1,4 +1,4 @@
-package org.mangorage.tsml.api.misc;
+package org.mangorage.tsml.api.mod;
 
 public enum Environment {
     CLIENT,

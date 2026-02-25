@@ -9,7 +9,7 @@ import com.imjustdoom.triviaspire.TriviaSpire;
 import com.imjustdoom.triviaspire.register.UiElements;
 import com.imjustdoom.triviaspire.screen.BaseScreen;
 import org.mangorage.tsml.api.mod.IModContainer;
-import org.mangorage.tsml.api.mod.Mods;
+import org.mangorage.tsml.api.mod.TSMLLoaderAPI;
 
 public class ModMenuScreen extends BaseScreen {
 
@@ -40,7 +40,7 @@ public class ModMenuScreen extends BaseScreen {
         // This is key: defaults apply to all cells added to this table
         modList.defaults().pad(5).expandX().fillX();
 
-        for (IModContainer mod : Mods.getAllMods()) {
+        for (IModContainer mod : TSMLLoaderAPI.getAllMods()) {
             Table modEntry = new Table(skin);
 
             // Name (Left) & Version (Right)

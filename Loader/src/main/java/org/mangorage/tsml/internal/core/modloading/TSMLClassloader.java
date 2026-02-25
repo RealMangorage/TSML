@@ -1,4 +1,4 @@
-package org.mangorage.tsml.internal.core.classloader;
+package org.mangorage.tsml.internal.core.modloading;
 
 import org.mangorage.tsml.api.classloader.IClassTransformer;
 import org.mangorage.tsml.api.classloader.ITSMLClassloader;
@@ -16,18 +16,18 @@ import java.security.SecureClassLoader;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public final class IJarClassloader extends SecureClassLoader implements ITSMLClassloader {
+public final class TSMLClassloader extends SecureClassLoader implements ITSMLClassloader {
 
     private final List<IJar> jars;
     private final List<IClassTransformer> transformers = new CopyOnWriteArrayList<>();
     private final Set<String> loaded = new HashSet<>();
 
-    public IJarClassloader(List<IJar> jars, ClassLoader parent) {
+    TSMLClassloader(List<IJar> jars, ClassLoader parent) {
         super(parent);
         this.jars = jars;
     }
 
-    public void init() {
+    void init() {
         // Auto-load transformers
         ServiceLoader.load(IClassTransformer.class, this).forEach(transformers::add);
     }

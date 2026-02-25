@@ -12,6 +12,8 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 
 public final class Bootstrap {
+    private static final String LAUNCH_CLASS = "org.mangorage.tsml.internal.core.modloading.ModLoadingManager";
+
 
     public static List<String> getNestedPathsFromStream(InputStream jarStream, String prefix) throws IOException {
         List<String> internalPaths = new ArrayList<>();
@@ -42,7 +44,7 @@ public final class Bootstrap {
 
         try (final var urlClassloader = new BootstrapURLClassloader(new URL[]{bootstrapJar}, list, Bootstrap.class.getClassLoader())) {
             Thread.currentThread().setContextClassLoader(urlClassloader);
-            final var mainClass = Class.forName("org.mangorage.tsml.internal.TSML", true, urlClassloader);
+            final var mainClass = Class.forName(LAUNCH_CLASS, true, urlClassloader);
             TSMLDefaultLogger.getInstance().info("Found TSML main class: " + mainClass);
             TSMLDefaultLogger.getInstance().info(mainClass.getName());
 
@@ -50,11 +52,11 @@ public final class Bootstrap {
                 TSMLDefaultLogger.getInstance().info("Method: " + method);
             }
 
-            TSMLDefaultLogger.getInstance().info("Looking for initPublic method...");
-            final var method = mainClass.getMethod("initPublic", String[].class, URL.class);
+            TSMLDefaultLogger.getInstance().info("Looking for run method...");
+            final var method = mainClass.getMethod("run", URL.class, String[].class);
             TSMLDefaultLogger.getInstance().info("Invoking TSML initPublic method...");
             TSMLDefaultLogger.getInstance().info(method.toString());
-            method.invoke(null, (Object) args, bootstrapJar);
+            method.invoke(null, bootstrapJar, (Object) args);
         } catch (Throwable e) {
             TSMLDefaultLogger.getInstance().error("Failed to start TSML:");
             TSMLDefaultLogger.getInstance().error(e);

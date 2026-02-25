@@ -7,9 +7,7 @@ import java.util.List;
 
 public interface IJar {
 
-    default String getName() {
-        return "";
-    }
+    String getName();
 
     /** URL of this jar (or nested jar entry) */
     URL getURL();

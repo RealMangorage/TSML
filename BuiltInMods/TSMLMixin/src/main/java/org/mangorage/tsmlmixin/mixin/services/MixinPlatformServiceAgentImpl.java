@@ -1,6 +1,6 @@
 package org.mangorage.tsmlmixin.mixin.services;
 
-import org.mangorage.tsml.TSML;
+import org.mangorage.tsml.api.mod.TSMLLoaderAPI;
 import org.spongepowered.asm.launch.platform.IMixinPlatformServiceAgent;
 import org.spongepowered.asm.launch.platform.MixinPlatformAgentAbstract;
 import org.spongepowered.asm.launch.platform.container.IContainerHandle;
@@ -11,8 +11,7 @@ import java.util.List;
 
 public final class MixinPlatformServiceAgentImpl extends MixinPlatformAgentAbstract implements IMixinPlatformServiceAgent {
 
-    public MixinPlatformServiceAgentImpl() {
-    }
+    public MixinPlatformServiceAgentImpl() {}
 
 
     @Override
@@ -21,7 +20,7 @@ public final class MixinPlatformServiceAgentImpl extends MixinPlatformAgentAbstr
 
     @Override
     public String getSideName() {
-        return switch (TSML.getEnvironment()) {
+        return switch (TSMLLoaderAPI.getEnvironment()) {
             case CLIENT -> Constants.SIDE_CLIENT;
             case SERVER -> Constants.SIDE_DEDICATEDSERVER;
             case UNKNOWN -> Constants.SIDE_UNKNOWN;

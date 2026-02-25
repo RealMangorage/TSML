@@ -1,4 +1,4 @@
-package org.mangorage.tsml.internal.core;
+package org.mangorage.tsml.internal.core.modloading;
 
 import org.mangorage.tsml.api.logger.ILoaderLogger;
 
@@ -7,7 +7,7 @@ import java.lang.reflect.Method;
 public final class TSMLTriviaSpireReflectiveLogger implements ILoaderLogger {
     private final Class<?> delegate;
 
-    public TSMLTriviaSpireReflectiveLogger(Class<?> delegate) {
+    TSMLTriviaSpireReflectiveLogger(Class<?> delegate) {
         this.delegate = delegate;
     }
 

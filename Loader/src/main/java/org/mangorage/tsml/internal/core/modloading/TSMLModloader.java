@@ -1,4 +1,4 @@
-package org.mangorage.tsml.internal.core.mod;
+package org.mangorage.tsml.internal.core.modloading;
 
 import com.google.gson.Gson;
 import io.github.classgraph.ClassGraph;
@@ -26,6 +26,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * TODO: Integrate into the {@link ModLoadingManager} system
+ */
+@Deprecated
 public final class TSMLModloader {
 
     private static final Map<String, IModContainer> modContainerMap = new HashMap<>();
@@ -85,7 +89,7 @@ public final class TSMLModloader {
                     .collect(Collectors.toList());
         } else {
             // Fallback: maybe just return empty list or throw
-            throw new IllegalStateException("Current ClassLoader is neither URLClassLoader nor IJarClassloader");
+            throw new IllegalStateException("Current ClassLoader is neither URLClassLoader nor TSMLClassloader");
         }
     }
 

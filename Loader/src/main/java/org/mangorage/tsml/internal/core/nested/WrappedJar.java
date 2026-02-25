@@ -12,31 +12,36 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
-public final class JarWrapper implements IJar {
+public final class WrappedJar implements IJar {
 
     private final JarFile jarFile;
 
-    public JarWrapper(JarFile jarFile) {
+    public WrappedJar(JarFile jarFile) {
         this.jarFile = jarFile;
     }
 
     // -------------------- Factory --------------------
     public static IJar create(Path path) {
-        try { return new JarWrapper(new JarFile(path.toFile())); }
+        try { return new WrappedJar(new JarFile(path.toFile())); }
         catch (IOException e) { throw new RuntimeException(e); }
     }
 
     public static IJar create(File file) {
-        try { return new JarWrapper(new JarFile(file)); }
+        try { return new WrappedJar(new JarFile(file)); }
         catch (IOException e) { throw new RuntimeException(e); }
     }
 
     public static IJar create(String path) {
-        try { return new JarWrapper(new JarFile(path)); }
+        try { return new WrappedJar(new JarFile(path)); }
         catch (IOException e) { throw new RuntimeException(e); }
     }
 
-    public static IJar create(JarFile jarFile) { return new JarWrapper(jarFile); }
+    public static IJar create(JarFile jarFile) { return new WrappedJar(jarFile); }
+
+    @Override
+    public String getName() {
+        return jarFile.getName();
+    }
 
     // -------------------- IJar --------------------
     @Override

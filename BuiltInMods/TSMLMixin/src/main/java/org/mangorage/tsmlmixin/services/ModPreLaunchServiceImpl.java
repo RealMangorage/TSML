@@ -2,8 +2,7 @@ package org.mangorage.tsmlmixin.services;
 
 import org.mangorage.tsml.api.TSMLLogger;
 import org.mangorage.tsml.api.mod.IModPreLaunch;
-import org.mangorage.tsml.api.mod.Mods;
-import org.mangorage.tsmlmixin.mixin.SpongeMixinImpl;
+import org.mangorage.tsml.api.mod.TSMLLoaderAPI;
 import org.spongepowered.asm.mixin.Mixins;
 
 import java.util.List;
@@ -12,7 +11,7 @@ import java.util.Optional;
 public final class ModPreLaunchServiceImpl implements IModPreLaunch {
     @Override
     public void onPreLaunch() {
-        Mods.getAllMods().forEach(mod -> {
+        TSMLLoaderAPI.getAllMods().forEach(mod -> {
             try {
                 final Optional<List<String>> mixins = mod.getPropertyList("mixins", String.class);
                 if (mixins.isPresent()) {
