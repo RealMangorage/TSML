@@ -42,12 +42,14 @@ public final class ModLoadingManager {
     }
 
     static void init(URL baseResource, String[] args) throws Exception {
-        final List<IJar> discoveredJars = new ArrayList<>();
+        final List<IJar> discoveredMods = new ArrayList<>();
         state = ModLoadingState.SETUP;
-        final IJar triviaSpireJar = DISCOVERY_STAGE.run(baseResource, discoveredJars);
+
+        final IJar triviaSpireJar = DISCOVERY_STAGE.run(baseResource, discoveredMods);
+
 
         state = ModLoadingState.MOD_DISCOVERY;
-        final InitialSetupStage.StageResult initialStageResult = INITIAL_SETUP_STAGE.run(discoveredJars, triviaSpireJar, ModLoadingManager::setupLogger, ModLoadingManager::setEnvironment);
+        final InitialSetupStage.StageResult initialStageResult = INITIAL_SETUP_STAGE.run(discoveredMods, triviaSpireJar, ModLoadingManager::setupLogger, ModLoadingManager::setEnvironment);
 
         state = ModLoadingState.MOD_SCANNING;
         TSMLModloader.scanMods(initialStageResult.foundClass(), args);

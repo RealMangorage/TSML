@@ -1,6 +1,9 @@
 plugins {
     id 'java'
+    id 'net.minecraftforge.jarjar' version '+'
 }
+
+jarJar.register()
 
 group = 'org.mangorage'
 version = "$TSML_VERSION"
@@ -22,12 +25,6 @@ repositories {
     }
 }
 
-configurations {
-    jarJar {
-        canBeResolved = true
-        canBeConsumed = false
-    }
-}
 
 dependencies {
     compileOnly(project(":Loader"))
@@ -62,29 +59,28 @@ processResources {
     }
 }
 
-jar {
+// 1. Ensure the jarJar task actually runs during the build
+tasks.build {
+    dependsOn(tasks.jarJar)
+}
 
-    // Build output.txt during configuration, not execution
-    def outputTxt = new File(temporaryDir, "output.txt")
-    outputTxt.text = configurations.jarJar.files.collect { it.name }.join(System.lineSeparator())
+// 2. Clear the default 'jar' from outgoing configurations and swap in 'jarJar'
+def outgoingConfigurations = [configurations.apiElements, configurations.runtimeElements]
 
-    archiveBaseName.set('TSMLMixin')
-    archiveClassifier.set('') // no classifier, replaces default jar
+outgoingConfigurations.each { config ->
+    config.outgoing.artifacts.clear() // Remove the standard jar
+    config.outgoing.artifact(tasks.jarJar) // Add the jarJar as the primary artifact
+}
 
-    // Include compiled classes
-    from sourceSets.main.output
+// 3. Optional: Make the filenames look "normal" in build/libs
+tasks.jar {
+    archiveClassifier = 'raw'
+}
 
-    // Include compileOnly jars inside JarJar/
-    from {
-        configurations.jarJar
-    } {
-        into 'JarJar'
-    }
+tasks.jarJar {
+    archiveClassifier = ''
+}
 
-    // Include the output.txt
-    from(outputTxt) {
-        into 'JarJar'
-    }
-
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+artifacts {
+    archives(tasks.jarJar)
 }

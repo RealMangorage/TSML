@@ -51,6 +51,8 @@ public final class Bootstrap {
             for (StackTraceElement stackTraceElement : e.getStackTrace()) {
                 TSMLDefaultLogger.getInstance().error("\t" + stackTraceElement);
             }
+
+            e.getStackTrace();
         }
     }
 }

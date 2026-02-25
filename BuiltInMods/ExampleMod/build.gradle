@@ -1,15 +1,5 @@
 plugins {
     id 'java'
-    id 'net.minecraftforge.jarjar' version '+'
-}
-
-jarJar.register()
-
-tasks.named('jar') {
-    archiveClassifier = null
-}
-tasks.named('jarJar') {
-    archiveClassifier = null
 }
 
 group = 'org.mangorage'
@@ -21,16 +11,13 @@ repositories {
 
 dependencies {
     compileOnly project(":Loader")
-
-    jarJar(project(":BuiltInMods:TSMLMixin"))
 }
 
-// Make the jar task produce nothing so it doesn't conflict
-tasks.named('jar') {
-    enabled = false
-}
+processResources {
+    // This tells Gradle: "If the version changes, this task is dirty"
+    inputs.property "version", project.version
 
-// Make `jarJar` the main artifact of the build
-tasks.named('build') {
-    dependsOn(tasks.getByName("jarJar"))
+    filesMatching("examplemod.mods.json") {
+        expand "version": project.version
+    }
 }

@@ -29,7 +29,15 @@ public final class TSMLClassloader extends SecureClassLoader implements ITSMLCla
 
     void init() {
         // Auto-load transformers
-        ServiceLoader.load(IClassTransformer.class, this).forEach(transformers::add);
+        ServiceLoader.load(IClassTransformer.class, this)
+                .stream()
+                .forEach(provider -> {
+                    try {
+                        transformers.add(provider.get());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                });
     }
 
     // ------------------- Class Loading -------------------

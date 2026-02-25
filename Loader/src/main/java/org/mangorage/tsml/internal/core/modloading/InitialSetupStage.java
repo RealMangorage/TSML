@@ -27,9 +27,9 @@ public final class InitialSetupStage {
         }
     }
 
-    StageResult run(List<IJar> jars, IJar triviaJar, Consumer<ILoaderLogger> loaderLoggerConsumer, Consumer<Environment> environmentConsumer) throws ClassNotFoundException, IOException {
+    StageResult run(List<IJar> classpathJars, IJar triviaJar, Consumer<ILoaderLogger> loaderLoggerConsumer, Consumer<Environment> environmentConsumer) throws ClassNotFoundException, IOException {
         final ClassLoader current = Thread.currentThread().getContextClassLoader();
-        final TSMLClassloader tsmlClassloader = new TSMLClassloader(jars, current);
+        final TSMLClassloader tsmlClassloader = new TSMLClassloader(classpathJars, current);
         Thread.currentThread().setContextClassLoader(tsmlClassloader);
 
         Class.forName("org.tinylog.converters.GzipEncoder", false, tsmlClassloader);

@@ -1,5 +1,6 @@
 package org.mangorage.tsml.internal.core.jarjar;
 
-public final class JarJarMetadata {
+import java.util.List;
 
+public record JarJarMetadata(List<JarMetadata> jars) {
 }

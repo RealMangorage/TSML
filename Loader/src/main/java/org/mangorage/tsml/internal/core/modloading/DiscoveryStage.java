@@ -1,6 +1,7 @@
 package org.mangorage.tsml.internal.core.modloading;
 
-import org.mangorage.tsml.api.TSMLLogger;
+import org.mangorage.tsml.internal.core.jarjar.JarCouple;
+import org.mangorage.tsml.internal.core.jarjar.JarJarHelper;
 import org.mangorage.tsml.internal.core.nested.WrappedJar;
 import org.mangorage.tsml.internal.core.nested.api.IJar;
 
@@ -11,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public final class DiscoveryStage {
 
@@ -40,10 +42,10 @@ public final class DiscoveryStage {
 
     /**
      * @param baseResource → Will be the TSML jar itself
-     * @param jars → Add any jars you want exposed.
+     * @param finalClasspathJars → Add any jars you want exposed.
      * @return The main TriviaSpire.jar, used for the next stage to find the main class and logger class.
      */
-    public IJar run(URL baseResource, List<IJar> jars) throws IOException {
+    public IJar run(URL baseResource, List<IJar> finalClasspathJars) throws IOException {
         Path rootPath = Path.of("");
         Path modsPath = rootPath.resolve("mods");
 
@@ -65,43 +67,46 @@ public final class DiscoveryStage {
                 .map(WrappedJar::create)
                 .toList();
 
-        // Internal TSMLLoaderAPI, included by default
-        final List<IJar> builtInMods = new ArrayList<>(tsmlJar.getNestedJars()
-                .stream()
-                .filter(jar -> !jar.getName().contains("JarJarLoader"))
-                .toList()
-        );
 
-        // Get all JarJared Libraries for mods
-        final List<IJar> libraryJars = new ArrayList<>();
+        finalClasspathJars.add(triviaSpireJar);
+        finalClasspathJars.addAll(modJars);
 
-        // Get All Libraries for BuiltIn TSMLLoaderAPI
-        builtInMods.forEach(jar -> {
+        // Jar Coupling
+
+        final List<JarCouple> jarInJarsBuiltInMods = new ArrayList<>();
+        JarJarHelper.scanJar(tsmlJar, jarInJarsBuiltInMods, true);
+
+        final List<JarCouple> jarInJarBuiltInModsLibraries = new ArrayList<>();
+        jarInJarsBuiltInMods.forEach(couple -> {
             try {
-                libraryJars.addAll(jar.getNestedJars());
-                TSMLLogger.getInternal().info("Built nested jar tree for built-in mod: " + jar.getURL());
-            } catch (Exception e) {
-                TSMLLogger.getInternal().error("Failed to build nested jar tree for built-in mod: " + jar.getURL());
-                TSMLLogger.getInternal().error(e);
-            }
-        });
-
-        // Get All Libraries for External TSMLLoaderAPI
-        modJars.forEach(modJar -> {
-            try {
-                libraryJars.addAll(modJar.getNestedJars());
-                TSMLLogger.getInternal().info("Built nested jar tree for mod: " + modJar.getURL());
+                final var builtInJar = couple.jar().getNestedJar(couple.metadata().path());
+                JarJarHelper.scanJar(builtInJar, jarInJarBuiltInModsLibraries, false);
             } catch (IOException e) {
-                TSMLLogger.getInternal().error("Failed to build nested jar tree for: " + modJar.getURL());
-                TSMLLogger.getInternal().error(e);
+                throw new RuntimeException(e);
+            }
+
+        });
+
+        final List<JarCouple> jarInJars = new ArrayList<>();
+        modJars.forEach(jar -> JarJarHelper.scanJar(jar, jarInJars, true));
+
+
+        final List<JarCouple> finalJarCouples = new ArrayList<>();
+        finalJarCouples.addAll(jarInJarsBuiltInMods);
+        finalJarCouples.addAll(jarInJarBuiltInModsLibraries);
+        finalJarCouples.addAll(jarInJars);
+
+        final List<IJar> finalJars = new ArrayList<>();
+
+        finalJarCouples.forEach(couple -> {
+            try {
+                final var nestedJar = couple.jar().getNestedJar(couple.metadata().path());
+                finalClasspathJars.add(nestedJar);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
         });
 
-        jars.add(triviaSpireJar);
-        jars.addAll(modJars);
-        jars.addAll(builtInMods);
-        // TODO: Handle Better library conflict resolutions.
-        jars.addAll(libraryJars);
 
         return triviaSpireJar;
     }
