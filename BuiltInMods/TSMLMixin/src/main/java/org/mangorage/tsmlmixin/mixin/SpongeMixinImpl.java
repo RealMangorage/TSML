@@ -10,6 +10,8 @@ import org.spongepowered.asm.mixin.transformer.IMixinTransformerFactory;
 import org.spongepowered.asm.mixin.transformer.ext.Extensions;
 import org.spongepowered.asm.mixin.transformer.ext.IClassGenerator;
 
+import java.lang.reflect.Method;
+
 public final class SpongeMixinImpl {
     private static final boolean DEBUG = false;
 
@@ -24,6 +26,24 @@ public final class SpongeMixinImpl {
 
     public static IMixinTransformer getTransformer() {
         return transformer;
+    }
+
+    public static void prepare() {
+        if (SpongeMixinImpl.transformer != null) return;
+        SpongeMixinImpl.transformer = factory.createTransformer();
+    }
+
+    private static void completeMixinBootstrap() {
+        // Move to the default phase.
+        try {
+            final Method method = MixinEnvironment.class.getDeclaredMethod("gotoPhase", MixinEnvironment.Phase.class);
+            method.setAccessible(true);
+            method.invoke(null, MixinEnvironment.Phase.INIT);
+            method.invoke(null, MixinEnvironment.Phase.DEFAULT);
+        } catch(final Exception exception) {
+            exception.printStackTrace();
+        }
+        prepare();
     }
 
     public static void load() {
@@ -41,24 +61,7 @@ public final class SpongeMixinImpl {
 
         MixinBootstrap.init();
 
-        transformer = factory.createTransformer();
-
-        final Extensions extensions = (Extensions) transformer.getExtensions();
-        extensions.add(new IClassGenerator() {
-            @Override
-            public String getName() {
-                System.out.println("[Mixin] getName() called on IClassGenerator");
-                return "";
-            }
-
-            @Override
-            public boolean generate(String name, ClassNode classNode) {
-                System.out.println("[Mixin] Attempting to generate class: " + name);
-                return false;
-            }
-        });
-
-        System.out.println("[Mixin] Registered MixinExtension");
+        completeMixinBootstrap();
 
         MixinExtrasBootstrap.init();
     }

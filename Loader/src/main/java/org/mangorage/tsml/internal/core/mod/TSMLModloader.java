@@ -4,9 +4,11 @@ import com.google.gson.Gson;
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ScanResult;
 import org.mangorage.tsml.api.TSMLLogger;
+import org.mangorage.tsml.api.classloader.ITSMLClassloader;
 import org.mangorage.tsml.api.dependency.Dependency;
 import org.mangorage.tsml.api.mod.IModContainer;
 import org.mangorage.tsml.api.mod.Mod;
+import org.mangorage.tsml.internal.core.nested.api.IJar;
 import org.mangorage.tsml.internal.mod.BuiltInMod;
 
 import java.io.InputStream;
@@ -70,16 +72,24 @@ public final class TSMLModloader {
 
     public static List<String> getClasspathAsStrings() {
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
-        if (cl instanceof URLClassLoader urlCl) {
+
+        if (cl instanceof ITSMLClassloader iJarCl) {
+            // Map the IJar list to string representations (e.g., jar paths or names)
+            return iJarCl.getJars().stream()
+                    .map(IJar::getURL) // assuming IJar has a getName() method
+                    .map(URL::toString)
+                    .collect(Collectors.toList());
+        } else if (cl instanceof URLClassLoader urlCl) {
             return Arrays.stream(urlCl.getURLs())
                     .map(URL::toString)
                     .collect(Collectors.toList());
         } else {
-            throw new IllegalStateException("Current ClassLoader is not a URLClassLoader");
+            // Fallback: maybe just return empty list or throw
+            throw new IllegalStateException("Current ClassLoader is neither URLClassLoader nor IJarClassloader");
         }
     }
 
-    public static void scanMods(List<String> nestedJars, String mainClass, String[] args) {
+    public static void scanMods(String mainClass, String[] args) {
         TSMLLogger.getInternal().info("Scanning for mods...");
 
         modContainerMap.put(
@@ -97,17 +107,12 @@ public final class TSMLModloader {
                 )
         );
 
-        final List<String> classPath = new ArrayList<>(nestedJars);
-        classPath.addAll(getClasspathAsStrings());
-
-
-
         try (ScanResult scanResult = new ClassGraph()
                 .enableAnnotationInfo()         // Required to find @Annotation
                 .enableClassInfo()
                 .enableRemoteJarScanning()
                 .addClassLoader(Thread.currentThread().getContextClassLoader())
-                .overrideClasspath(classPath)
+                .overrideClasspath(getClasspathAsStrings())
                 .scan()
         ) {
 
@@ -245,5 +250,30 @@ public final class TSMLModloader {
 
     public static IModContainer getMod(String id) {
         return modContainerMap.get(id);
+    }
+
+    public static void add(String mainClass, String[] args) {
+        modContainerMap.put(
+                "trivia-spire",
+                new ModContainerImpl(
+                        createTriviaSpireModInfo(mainClass, args),
+                        TriviaSpireMod.class
+                )
+        );
+
+        modContainerMap.put("tsml",
+                new ModContainerImpl(
+                        getModInfo("tsml"),
+                        BuiltInMod.class
+                )
+        );
+
+        modContainerMap.put(
+                "tsmlcore",
+                new ModContainerImpl(
+                        getModInfo("tsmlcore"),
+                        BuiltInMod.class
+                )
+        );
     }
 }

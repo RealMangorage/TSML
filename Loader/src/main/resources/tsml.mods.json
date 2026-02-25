@@ -6,10 +6,5 @@
   "entrypoint": "org.mangorage.tsml.internal.core.BuiltInMod",
   "authors": [
     "MangoRage"
-  ],
-  "properties": {
-    "mixins": [
-      "tsml.mixins.json"
-    ]
-  }
+  ]
 }

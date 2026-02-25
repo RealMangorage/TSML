@@ -56,9 +56,6 @@ public final class TSMLMixinServiceImpl extends MixinServiceAbstract implements 
     @Override
     public void wire(MixinEnvironment.Phase phase, IConsumer<MixinEnvironment.Phase> phaseConsumer) {
         super.wire(phase, phaseConsumer);
-        if (phase == MixinEnvironment.Phase.PREINIT) {
-            phaseConsumer.accept(MixinEnvironment.Phase.DEFAULT);
-        }
     }
 
     @Override

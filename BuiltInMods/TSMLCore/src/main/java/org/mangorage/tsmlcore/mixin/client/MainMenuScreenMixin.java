@@ -1,4 +1,4 @@
-package org.mangorage.tsmlcore.mixin;
+package org.mangorage.tsmlcore.mixin.client;
 
 import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
