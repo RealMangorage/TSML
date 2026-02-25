@@ -3,7 +3,12 @@
   "minVersion": "0.8",
   "package": "org.mangorage.tsmlcore.mixin",
   "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "SharedBridgeJsonCoreMixin"
+  ],
   "client": [
-    "client.Lwjgl3LauncherMixin"
+    "client.BaseScreenMixin",
+    "client.Lwjgl3LauncherMixin",
+    "client.MainMenuScreenMixin"
   ]
 }

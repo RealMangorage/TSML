@@ -135,8 +135,6 @@ public final class TSML {
          */
         setActiveLogger(triviaSpireReflectiveLogger);
 
-        tsmlLoader.loadClass("com.imjustdoom.triviaspire.lwjgl3.Lwjgl3Launcher");
-
         TSMLLogger.getLogger().info("Started TriviaSpire ModLoader");
 
         if (foundClass.equals(clientClass)) {
@@ -149,8 +147,6 @@ public final class TSML {
             TSMLLogger.getLogger().warn("Could not detect environment, found main class: " + foundClass);
             environment = Environment.UNKNOWN;
         }
-
-        tsmlLoader.init();
 
 
         ServiceLoader.load(ILoaderLogger.class, tsmlLoader).stream()
@@ -165,11 +161,12 @@ public final class TSML {
                 });
 
 
+        tsmlLoader.init();
+
+        TSMLModloader.scanMods(foundClass, args);
+
         ServiceLoader.load(IModPreLaunch.class, tsmlLoader).forEach(IModPreLaunch::onPreLaunch);
 
-        TSMLModloader.add(foundClass, args);
-
         TSMLModloader.initMods();
-
     }
 }

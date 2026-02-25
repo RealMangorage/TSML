@@ -21,6 +21,7 @@ public final class SpongeMixinClassTransformerImpl implements IClassTransformer 
 
     @Override
     public byte[] transform(String name, byte[] bytes) {
+
         for (String s : blacklisted) {
             if (name.startsWith(s)) {
                 return null;
@@ -36,6 +37,7 @@ public final class SpongeMixinClassTransformerImpl implements IClassTransformer 
         );
 
         if (!areByteArraysEqual(transformed, bytes)) {
+            System.out.println("Transformed class: " + name);
             return transformed;
         } else {
             return null;

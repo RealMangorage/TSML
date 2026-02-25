@@ -10,8 +10,6 @@ import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
-import java.security.CodeSource;
-import java.security.ProtectionDomain;
 import java.security.SecureClassLoader;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -41,8 +39,17 @@ public final class IJarClassloader extends SecureClassLoader implements ITSMLCla
 
         byte[] classBytes = getClassBytes(name);
         if (classBytes == null) {
-            System.out.println("Class not found: " + name);
-            return null;
+
+            for (IClassTransformer transformer : transformers) {
+                classBytes = transformer.generateClass(name);
+                if (classBytes != null)
+                    break;
+            }
+
+            // Still null, then we failed.
+            if (classBytes == null) {
+                throw new ClassNotFoundException();
+            }
         }
 
         if (!transformers.isEmpty()) {
@@ -52,8 +59,7 @@ public final class IJarClassloader extends SecureClassLoader implements ITSMLCla
                     if (transformed != null)
                         classBytes = transformed;
                 } catch (Throwable t) {
-                    t.printStackTrace();
-
+                    throw new IllegalStateException(t);
                 }
             }
         }
@@ -74,8 +80,9 @@ public final class IJarClassloader extends SecureClassLoader implements ITSMLCla
     }
 
     @Override
-    public boolean hasClass(String name) {
-        return getClassBytes(name) != null;
+    public boolean hasClass(final String name) {
+        if (!loaded.contains("Launcher")) return false;
+        return findLoadedClass(name.replace('/', '.')) != null;
     }
 
     @Override

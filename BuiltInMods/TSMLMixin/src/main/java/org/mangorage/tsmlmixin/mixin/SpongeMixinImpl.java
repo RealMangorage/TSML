@@ -65,8 +65,6 @@ public final class SpongeMixinImpl {
         completeMixinBootstrap();
 
         MixinExtrasBootstrap.init();
-
-        Mixins.addConfiguration("tsmlcore.mixins.json"); // Testing
     }
 
 }

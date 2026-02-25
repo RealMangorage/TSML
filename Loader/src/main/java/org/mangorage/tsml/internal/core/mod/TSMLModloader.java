@@ -251,29 +251,4 @@ public final class TSMLModloader {
     public static IModContainer getMod(String id) {
         return modContainerMap.get(id);
     }
-
-    public static void add(String mainClass, String[] args) {
-        modContainerMap.put(
-                "trivia-spire",
-                new ModContainerImpl(
-                        createTriviaSpireModInfo(mainClass, args),
-                        TriviaSpireMod.class
-                )
-        );
-
-        modContainerMap.put("tsml",
-                new ModContainerImpl(
-                        getModInfo("tsml"),
-                        BuiltInMod.class
-                )
-        );
-
-        modContainerMap.put(
-                "tsmlcore",
-                new ModContainerImpl(
-                        getModInfo("tsmlcore"),
-                        BuiltInMod.class
-                )
-        );
-    }
 }
