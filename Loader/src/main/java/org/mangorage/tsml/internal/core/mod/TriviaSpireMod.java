@@ -21,7 +21,6 @@ public final class TriviaSpireMod {
             } catch (ClassNotFoundException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
                 TSMLLogger.getInternal().error("Something went wrong while starting Trivia Spire mod:");
                 TSMLLogger.getInternal().error(e);
-                e.printStackTrace();
             }
         });
     }

@@ -10,6 +10,7 @@ import org.mangorage.tsml.internal.core.TSMLTriviaSpireReflectiveLogger;
 import org.mangorage.tsml.internal.core.nested.JarWrapper;
 import org.mangorage.tsml.internal.core.nested.api.IJar;
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -93,13 +94,14 @@ public final class TSML {
 
 
         modJars.forEach(url -> {
-//            try {
-//                nestedJars.addAll(buildNestedJarTreeFromMod(url));
-//                TSMLLogger.getInternal().info("Built nested jar tree for mod: " + url);
-//            } catch (IOException | URISyntaxException e) {
-//                TSMLLogger.getInternal().error("Failed to build nested jar tree for: " + url);
-//                TSMLLogger.getInternal().error(e);
-//            }
+            try {
+                IJar modJar = JarWrapper.create(url.getFile());
+                nestedJars.addAll(modJar.getNestedJars());
+                TSMLLogger.getInternal().info("Built nested jar tree for mod: " + url);
+            } catch (IOException e) {
+                TSMLLogger.getInternal().error("Failed to build nested jar tree for: " + url);
+                TSMLLogger.getInternal().error(e);
+            }
         });
 
 

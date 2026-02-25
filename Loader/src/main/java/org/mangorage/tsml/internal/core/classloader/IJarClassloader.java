@@ -10,6 +10,8 @@ import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
+import java.security.CodeSource;
+import java.security.ProtectionDomain;
 import java.security.SecureClassLoader;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -31,6 +33,25 @@ public final class IJarClassloader extends SecureClassLoader implements ITSMLCla
     }
 
     // ------------------- Class Loading -------------------
+
+    private ProtectionDomain getClassProtectionDomain(String className) {
+        String resourcePath = className.replace('.', '/') + ".class";
+
+        for (IJar jar : jars) {
+            if (jar.exists(resourcePath)) {
+                try {
+                    URL jarUrl = jar.getURL(); // IJar should return a URL to its source
+                    CodeSource source = new CodeSource(jarUrl, (java.security.cert.Certificate[]) null);
+                    return new ProtectionDomain(source, getPermissions(source));
+                } catch (Exception e) {
+                    throw new RuntimeException("Failed to create ProtectionDomain for class " + className, e);
+                }
+            }
+        }
+
+        // Could not find the class in any jar
+        return null;
+    }
 
     @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException {
@@ -65,7 +86,7 @@ public final class IJarClassloader extends SecureClassLoader implements ITSMLCla
         }
         try {
             this.loaded.add(name);
-            return defineClass(name, classBytes, 0, classBytes.length);
+            return defineClass(name, classBytes, 0, classBytes.length, getClassProtectionDomain(name));
         } catch (Exception e) {
             throw new ClassNotFoundException("Failed to define class: " + name, e);
         }

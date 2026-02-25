@@ -1,6 +1,5 @@
 package org.mangorage.tsml.internal.core;
 
-
 import org.mangorage.tsml.api.logger.ILoaderLogger;
 
 import java.lang.reflect.Method;
