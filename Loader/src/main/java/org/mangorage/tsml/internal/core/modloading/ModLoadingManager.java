@@ -49,16 +49,17 @@ public final class ModLoadingManager {
         state = ModLoadingState.MOD_DISCOVERY;
         final InitialSetupStage.StageResult initialStageResult = INITIAL_SETUP_STAGE.run(discoveredJars, triviaSpireJar, ModLoadingManager::setupLogger, ModLoadingManager::setEnvironment);
 
-        state = ModLoadingState.MOD_SCANNING_STATE;
+        state = ModLoadingState.MOD_SCANNING;
         TSMLModloader.scanMods(initialStageResult.foundClass(), args);
 
-        state = ModLoadingState.MOD_PRE_LOAD_STATE;
+        state = ModLoadingState.MOD_PRE_LOAD;
         ServiceLoader.load(IModPreLaunch.class, initialStageResult.classloader()).forEach(IModPreLaunch::onPreLaunch);
 
-        state = ModLoadingState.MOD_LOADING_STATE;
+        state = ModLoadingState.MOD_LOADING;
+
         TSMLModloader.initMods();
 
-        state = ModLoadingState.LOADED;
+        state = ModLoadingState.LOADING_STATE;
     }
 
     public static void run(URL baseResource, String[] args) throws Exception {

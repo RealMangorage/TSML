@@ -3,6 +3,7 @@ package org.mangorage.tsml.internal.core.modloading;
 import org.mangorage.tsml.api.TSMLLogger;
 import org.mangorage.tsml.api.logger.ILoaderLogger;
 import org.mangorage.tsml.api.mod.Environment;
+import org.mangorage.tsml.api.mod.IEarlyMod;
 import org.mangorage.tsml.internal.core.nested.api.IJar;
 
 import java.io.IOException;
@@ -53,6 +54,18 @@ public final class InitialSetupStage {
         } else {
             TSMLLogger.getLogger().warn("Could not detect environment, found main class: " + foundClass);
         }
+
+        ServiceLoader.load(IEarlyMod.class, tsmlClassloader)
+                .stream()
+                .forEach(provider -> {
+                        try {
+                            var mod = provider.get();
+                            TSMLLogger.getLogger().info("Found early mod: " + mod.getClass().getName());
+                        } catch (Throwable t) {
+                            TSMLLogger.getLogger().warn("Failed to load early mod provider: " + provider.type());
+                            TSMLLogger.getLogger().error(t);
+                        }
+                    });
 
         ServiceLoader.load(ILoaderLogger.class, tsmlClassloader).stream()
                 .limit(1)

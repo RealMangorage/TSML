@@ -7,6 +7,13 @@
   "authors": [
     "MangoRage"
   ],
+  "dependencies": [
+    {
+      "id": "tsml",
+      "optional": false,
+      "version": ">=0.14.0"
+    }
+  ],
   "properties": {
     "mixins": [
       "tsmlcore.mixins.json"

@@ -11,7 +11,7 @@ import com.imjustdoom.triviaspire.screen.BaseScreen;
 import org.mangorage.tsml.api.mod.IModContainer;
 import org.mangorage.tsml.api.mod.TSMLLoaderAPI;
 
-public class ModMenuScreen extends BaseScreen {
+public final class ModMenuScreen extends BaseScreen {
 
     public ModMenuScreen() {
         super(0.05f, 0.05f, 0.1f, 1.0f);
