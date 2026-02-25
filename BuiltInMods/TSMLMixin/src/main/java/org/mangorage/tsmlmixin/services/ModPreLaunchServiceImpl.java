@@ -3,6 +3,7 @@ package org.mangorage.tsmlmixin.services;
 import org.mangorage.tsml.api.TSMLLogger;
 import org.mangorage.tsml.api.mod.IModPreLaunch;
 import org.mangorage.tsml.api.mod.Mods;
+import org.mangorage.tsmlmixin.mixin.SpongeMixinImpl;
 import org.spongepowered.asm.mixin.Mixins;
 
 import java.util.List;
@@ -23,6 +24,5 @@ public final class ModPreLaunchServiceImpl implements IModPreLaunch {
 //                TSMLLogger.getLogger().error(throwable);
 //            }
 //        });
-        Mixins.addConfiguration("tsmlcore.mixins.json"); // Testing
     }
 }

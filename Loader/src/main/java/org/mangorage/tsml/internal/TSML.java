@@ -114,12 +114,14 @@ public final class TSML {
 
         Thread.currentThread().setContextClassLoader(tsmlLoader);
 
+
         /**
          * No idea why,
          * but we need
          * to do this so we don't get a {@link NoClassDefFoundError} Exception when exiting game
           */
         Class.forName("org.tinylog.converters.GzipEncoder", false, tsmlLoader);
+
 
         final var clientClass = "com.imjustdoom.triviaspire.lwjgl3.Lwjgl3Launcher";
         final var serverClass = "com.imjustdoom.triviaspire.server.ServerLauncher";
@@ -132,6 +134,8 @@ public final class TSML {
          * Can now use {@link TSMLLogger#getLogger()}
          */
         setActiveLogger(triviaSpireReflectiveLogger);
+
+        tsmlLoader.loadClass("com.imjustdoom.triviaspire.lwjgl3.Lwjgl3Launcher");
 
         TSMLLogger.getLogger().info("Started TriviaSpire ModLoader");
 
@@ -146,6 +150,9 @@ public final class TSML {
             environment = Environment.UNKNOWN;
         }
 
+        tsmlLoader.init();
+
+
         ServiceLoader.load(ILoaderLogger.class, tsmlLoader).stream()
                 .limit(1)
                 .findAny()
@@ -157,8 +164,6 @@ public final class TSML {
                     TSMLLogger.getLogger().warn("No custom logger provider found, using default logger");
                 });
 
-
-        tsmlLoader.init();
 
         ServiceLoader.load(IModPreLaunch.class, tsmlLoader).forEach(IModPreLaunch::onPreLaunch);
 

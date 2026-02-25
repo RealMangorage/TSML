@@ -5,6 +5,7 @@ import com.llamalad7.mixinextras.utils.MixinInternals;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.launch.MixinBootstrap;
 import org.spongepowered.asm.mixin.MixinEnvironment;
+import org.spongepowered.asm.mixin.Mixins;
 import org.spongepowered.asm.mixin.transformer.IMixinTransformer;
 import org.spongepowered.asm.mixin.transformer.IMixinTransformerFactory;
 import org.spongepowered.asm.mixin.transformer.ext.Extensions;
@@ -64,6 +65,8 @@ public final class SpongeMixinImpl {
         completeMixinBootstrap();
 
         MixinExtrasBootstrap.init();
+
+        Mixins.addConfiguration("tsmlcore.mixins.json"); // Testing
     }
 
 }

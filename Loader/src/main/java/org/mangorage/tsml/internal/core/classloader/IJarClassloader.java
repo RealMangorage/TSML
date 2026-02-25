@@ -14,11 +14,12 @@ import java.security.CodeSource;
 import java.security.ProtectionDomain;
 import java.security.SecureClassLoader;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public final class IJarClassloader extends SecureClassLoader implements ITSMLClassloader {
 
     private final List<IJar> jars;
-    private final List<IClassTransformer> transformers = new ArrayList<>();
+    private final List<IClassTransformer> transformers = new CopyOnWriteArrayList<>();
     private final Set<String> loaded = new HashSet<>();
 
     public IJarClassloader(List<IJar> jars, ClassLoader parent) {
@@ -44,14 +45,16 @@ public final class IJarClassloader extends SecureClassLoader implements ITSMLCla
             return null;
         }
 
-        for (IClassTransformer transformer : transformers) {
-            try {
-                byte[] transformed = transformer.transform(name, classBytes);
-                if (transformed != null)
-                    classBytes = transformed;
-            } catch (Throwable t) {
-                t.printStackTrace();
+        if (!transformers.isEmpty()) {
+            for (IClassTransformer transformer : transformers) {
+                try {
+                    byte[] transformed = transformer.transform(name, classBytes);
+                    if (transformed != null)
+                        classBytes = transformed;
+                } catch (Throwable t) {
+                    t.printStackTrace();
 
+                }
             }
         }
         try {
