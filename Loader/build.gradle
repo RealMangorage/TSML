@@ -1,6 +1,5 @@
 plugins {
     id 'java'
-    id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 group = 'org.mangorage'
@@ -10,23 +9,13 @@ repositories {
     mavenCentral()
 }
 
-configurations {
-    // This creates a "shadow" configuration that other projects can ask for
-    shadow
-}
-
-artifacts {
-    // This tells Gradle: "If someone asks for the 'shadow' config, give them this task's output"
-    shadow(shadowJar)
-}
-
 dependencies {
     compileOnly project(":")
     compileOnly rootProject.files("build/run/TriviaSpire-1.0.0.jar")
 
     compileOnly('net.fabricmc:sponge-mixin:0.17.0+mixin.0.8.7')
     compileOnly('io.github.llamalad7:mixinextras-common:0.5.3')
-// CHANGED: Use 'implementation' so it gets shadowed into the JAR
+    // CHANGED: Use 'implementation' so it gets shadowed into the JAR
     implementation 'io.github.classgraph:classgraph:4.8.179'
     implementation 'com.google.code.gson:gson:2.10.1'
 }
@@ -39,14 +28,3 @@ processResources {
         expand "version": project.version
     }
 }
-
-shadowJar {
-    relocate 'io.github.classgraph', 'org.mangorage.tsml.internal.deps.classgraph'
-    archiveClassifier.set('all') // This is the default, but it's good to be explicit
-
-    // Tip: This prevents ClassGraph's internal metadata from bloating your JAR
-    exclude 'META-INF/maven/**'
-}
-
-// Fixed the typo and ensured shadowJar runs whenever build is called
-tasks.build.dependsOn tasks.shadowJar

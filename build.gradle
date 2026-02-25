@@ -1,14 +1,13 @@
 plugins {
     id 'java'
     id 'application'
+    id 'net.minecraftforge.jarjar' version '+'
 }
 
 group = 'org.mangorage'
 version = "$TSML_VERSION"
 
-repositories {
-    mavenCentral()
-}
+repositories { mavenCentral() }
 
 configurations {
     jarJarLoader {
@@ -19,99 +18,51 @@ configurations {
         canBeResolved = true
         canBeConsumed = false
     }
+
 }
 
+jarJar.register() {
+    def outputTxt = new File(temporaryDir, "output.txt")
+    outputTxt.text = configurations.jarJarLoader.files.collect { it.name }.join(System.lineSeparator())
 
-dependencies {
-    jarJarLoader(project(":Loader"))
-
-    jarJarMod(project(":BuiltInMods:TSMLMixin"))
-    jarJarMod(project(":BuiltInMods:TSMLCore"))
-}
-
-application {
-    // CHANGE THIS or it WILL explode
-    mainClass = 'org.mangorage.tsml.bootstrap.Bootstrap'
-}
-
-jar {
-    manifest {
-        attributes(
-                'Main-Class': application.mainClass
-        )
-    }
-}
-
-task fatJar(type: Jar) {
-    archiveBaseName.set('TSML')
-    archiveClassifier.set('') // Creates MixinMod-all.jar
-
-    // Your compiled classes
-    from sourceSets.main.output
-
-    // Include the compileOnly jars themselves (as .jar files) inside JarJar/
-    from {
-        configurations.jarJarLoader
-    } {
+    from({ configurations.jarJarLoader.files }) {
         into 'JarJarLoader'
     }
 
-    from {
-        configurations.jarJarMod
-    } {
-        into 'JarJarMods'
+    // Include the output.txt
+    from(outputTxt) {
+        into 'JarJarLoader'
     }
-
-    // Add output.txt listing the jars inside JarJar/
-    from {
-        // Build a temporary file with the jar names
-        def tmpFile = new File(temporaryDir, "output.txt")
-        tmpFile.text = configurations.jarJarLoader.files.collect { it.name }.join(System.lineSeparator())
-        tmpFile
-    } {
-        into 'JarJarLoader' // Put the file inside the JarJar folder
-    }
-
-    // Add output.txt listing the jars inside JarJar/
-    from {
-        // Build a temporary file with the jar names
-        def tmpFile = new File(temporaryDir, "output.txt")
-        tmpFile.text = configurations.jarJarMod.files.collect { it.name }.join(System.lineSeparator())
-        tmpFile
-    } {
-        into 'JarJarMods' // Put the file inside the JarJar folder
-    }
-
-    manifest {
-        attributes(
-                'Main-Class': application.mainClass
-        )
-    }
-
-
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
+dependencies {
+    jarJarLoader(project(":Loader"))
+    jarJarLoader('io.github.classgraph:classgraph:4.8.179')
+    jarJarLoader('com.google.code.gson:gson:2.10.1')
+
+    jarJar(project(":BuiltInMods:TSMLMixin"))
+    jarJar(project(":BuiltInMods:TSMLCore"))
+    jarJar(project(":BuiltInMods:ExampleMod"))
+}
+
+application {
+    mainClass = 'org.mangorage.tsml.bootstrap.Bootstrap'
+}
+
+// Optional runGame
 tasks.register('runGame', JavaExec) {
     group = 'application'
-    description = 'Runs the TriviaSpire game because clicking buttons is hard'
+    description = 'Runs the TSML game'
 
-    classpath = fatJar.outputs.files
+    classpath = tasks.getByName("jarJar").outputs.files
     mainClass = application.mainClass
 
-    // THIS is the part your brain skipped
     workingDir = file("$buildDir/run")
+    doFirst { workingDir.mkdirs() }
 
-    doFirst {
-        workingDir.mkdirs()
-    }
-
-    // Use Java 17 JRE
     javaLauncher = javaToolchains.launcherFor {
         languageVersion = JavaLanguageVersion.of(17)
     }
 
-
-    // optional JVM args, because games like memory
     jvmArgs '-Xms512M', '-Xmx2G'
 }

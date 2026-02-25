@@ -1,4 +1,21 @@
+pluginManagement {
+    repositories {
+        // Gradle's plugin portal (standard)
+        gradlePluginPortal()
+
+        // Maven Central
+        mavenCentral()
+
+        // Your custom Maven repo
+        maven {
+            name = 'Forge'
+            url = 'https://maven.minecraftforge.net'
+        }
+    }
+}
+
 rootProject.name = 'TSML'
+
 include 'Loader'
 include 'BuiltInMods'
 include 'BuiltInMods:ExampleMod'
