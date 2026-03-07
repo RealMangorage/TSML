@@ -1,10 +1,10 @@
-package org.mangorage.tsml.internal.core.modloading;
+package org.mangorage.tsml.internal.core.modloading.stages;
 
 import org.mangorage.tsml.api.TSMLLogger;
 import org.mangorage.tsml.api.logger.ILoaderLogger;
 import org.mangorage.tsml.api.mod.Environment;
 import org.mangorage.tsml.api.mod.IEarlyMod;
-import org.mangorage.tsml.internal.core.nested.api.IJar;
+import org.mangorage.tsml.api.jar.IJar;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,7 +13,7 @@ import java.util.ServiceLoader;
 import java.util.function.Consumer;
 import java.util.jar.Manifest;
 
-public final class InitialSetupStage {
+public final class ModSetupStage {
     record StageResult(TSMLClassloader classloader, String foundClass) {}
 
     static String getMainClass(IJar jar) throws IOException {
@@ -28,6 +28,7 @@ public final class InitialSetupStage {
     }
 
     StageResult run(List<IJar> classpathJars, IJar triviaJar, Consumer<ILoaderLogger> loaderLoggerConsumer, Consumer<Environment> environmentConsumer) throws ClassNotFoundException, IOException {
+        classpathJars.add(triviaJar);
         final ClassLoader current = Thread.currentThread().getContextClassLoader();
         final TSMLClassloader tsmlClassloader = new TSMLClassloader(classpathJars, current);
         Thread.currentThread().setContextClassLoader(tsmlClassloader);

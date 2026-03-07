@@ -1,6 +1,6 @@
 package org.mangorage.tsml.internal.core.jarjar;
 
-import org.mangorage.tsml.internal.core.nested.api.IJar;
+import org.mangorage.tsml.api.jar.IJar;
 
 public record JarCouple(
         IJar jar,

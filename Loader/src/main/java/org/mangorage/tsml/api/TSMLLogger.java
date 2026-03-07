@@ -3,7 +3,7 @@ package org.mangorage.tsml.api;
 import org.mangorage.tsml.api.logger.ILoaderLogger;
 import org.mangorage.tsml.bootstrap.api.logger.ILogger;
 import org.mangorage.tsml.bootstrap.internal.TSMLDefaultLogger;
-import org.mangorage.tsml.internal.core.modloading.ModLoadingManager;
+import org.mangorage.tsml.internal.core.modloading.stages.ModLoadingManager;
 
 public final class TSMLLogger {
     /**

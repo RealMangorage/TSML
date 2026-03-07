@@ -1,7 +1,7 @@
 package org.mangorage.tsml.internal.core.jarjar;
 
 import com.google.gson.Gson;
-import org.mangorage.tsml.internal.core.nested.api.IJar;
+import org.mangorage.tsml.api.jar.IJar;
 import java.util.List;
 
 public final class JarJarHelper {

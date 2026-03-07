@@ -1,7 +1,7 @@
-package org.mangorage.tsml.internal.core.nested;
+package org.mangorage.tsml.internal.core.jarjar;
 
 
-import org.mangorage.tsml.internal.core.nested.api.IJar;
+import org.mangorage.tsml.api.jar.IJar;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -14,13 +14,13 @@ import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 
-public final class NestedJar implements IJar {
+public final class JarInJar implements IJar {
 
     private final byte[] jarBytes;
     private final String name;
     private final String originPath;
 
-    public NestedJar(byte[] jarBytes, String name, String originPath) {
+    public JarInJar(byte[] jarBytes, String name, String originPath) {
         this.jarBytes = jarBytes;
         this.name = name;
         this.originPath = originPath;
@@ -59,7 +59,7 @@ public final class NestedJar implements IJar {
             while ((entry = jis.getNextJarEntry()) != null) {
                 if (!entry.isDirectory() && entry.getName().equals(path)) {
                     byte[] bytes = jis.readAllBytes();
-                    return new NestedJar(bytes, entry.getName(), originPath + "!/" + name);
+                    return new JarInJar(bytes, entry.getName(), originPath + "!/" + name);
                 }
             }
         } catch (IOException e) {
@@ -76,7 +76,7 @@ public final class NestedJar implements IJar {
             while ((entry = jis.getNextJarEntry()) != null) {
                 if (!entry.isDirectory() && entry.getName().endsWith(".jar")) {
                     byte[] bytes = jis.readAllBytes();
-                    nested.add(new NestedJar(bytes, entry.getName(), originPath + "!/" + name));
+                    nested.add(new JarInJar(bytes, entry.getName(), originPath + "!/" + name));
                 }
             }
         } catch (IOException e) {

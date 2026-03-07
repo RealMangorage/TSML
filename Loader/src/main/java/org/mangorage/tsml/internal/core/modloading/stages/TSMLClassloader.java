@@ -1,8 +1,8 @@
-package org.mangorage.tsml.internal.core.modloading;
+package org.mangorage.tsml.internal.core.modloading.stages;
 
 import org.mangorage.tsml.api.classloader.IClassTransformer;
 import org.mangorage.tsml.api.classloader.ITSMLClassloader;
-import org.mangorage.tsml.internal.core.nested.api.IJar;
+import org.mangorage.tsml.api.jar.IJar;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -77,7 +77,7 @@ public final class TSMLClassloader extends SecureClassLoader implements ITSMLCla
 
             // Still null, then we failed.
             if (classBytes == null) {
-                throw new ClassNotFoundException();
+                throw new ClassNotFoundException(name);
             }
         }
 

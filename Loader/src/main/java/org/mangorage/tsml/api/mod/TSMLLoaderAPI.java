@@ -2,7 +2,7 @@ package org.mangorage.tsml.api.mod;
 
 import org.mangorage.tsml.api.logger.ILoaderLogger;
 import org.mangorage.tsml.internal.core.modloading.TSMLModloader;
-import org.mangorage.tsml.internal.core.modloading.ModLoadingManager;
+import org.mangorage.tsml.internal.core.modloading.stages.ModLoadingManager;
 
 import java.util.List;
 import java.util.Optional;

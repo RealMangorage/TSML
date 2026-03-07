@@ -2,7 +2,7 @@ package org.mangorage.tsmlcore;
 
 import org.mangorage.tsml.api.mod.IEarlyMod;
 import org.mangorage.tsml.api.mod.ModLoadingState;
-import org.mangorage.tsml.internal.core.modloading.ModLoadingManager;
+import org.mangorage.tsml.internal.core.modloading.stages.ModLoadingManager;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;

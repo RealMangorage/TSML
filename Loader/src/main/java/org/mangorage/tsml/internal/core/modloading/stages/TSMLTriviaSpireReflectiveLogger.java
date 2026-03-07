@@ -1,4 +1,4 @@
-package org.mangorage.tsml.internal.core.modloading;
+package org.mangorage.tsml.internal.core.modloading.stages;
 
 import org.mangorage.tsml.api.logger.ILoaderLogger;
 

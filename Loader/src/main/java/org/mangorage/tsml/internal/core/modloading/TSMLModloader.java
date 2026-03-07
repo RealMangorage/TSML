@@ -8,7 +8,8 @@ import org.mangorage.tsml.api.classloader.ITSMLClassloader;
 import org.mangorage.tsml.api.dependency.Dependency;
 import org.mangorage.tsml.api.mod.IModContainer;
 import org.mangorage.tsml.api.mod.Mod;
-import org.mangorage.tsml.internal.core.nested.api.IJar;
+import org.mangorage.tsml.api.jar.IJar;
+import org.mangorage.tsml.internal.core.modloading.stages.ModLoadingManager;
 import org.mangorage.tsml.internal.mod.BuiltInMod;
 
 import java.io.InputStream;

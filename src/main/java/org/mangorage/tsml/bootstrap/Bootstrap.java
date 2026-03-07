@@ -7,7 +7,7 @@ import java.net.URL;
 import java.util.List;
 
 public final class Bootstrap {
-    private static final String LAUNCH_CLASS = "org.mangorage.tsml.internal.core.modloading.ModLoadingManager";
+    private static final String LAUNCH_CLASS = "org.mangorage.tsml.internal.core.modloading.stages.ModLoadingManager";
 
 
     public static void main(String[] args) {
@@ -52,7 +52,7 @@ public final class Bootstrap {
                 TSMLDefaultLogger.getInstance().error("\t" + stackTraceElement);
             }
 
-            e.getStackTrace();
+            e.printStackTrace();
         }
     }
 }

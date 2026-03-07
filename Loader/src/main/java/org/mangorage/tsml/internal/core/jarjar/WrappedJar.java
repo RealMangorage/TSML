@@ -1,6 +1,6 @@
-package org.mangorage.tsml.internal.core.nested;
+package org.mangorage.tsml.internal.core.jarjar;
 
-import org.mangorage.tsml.internal.core.nested.api.IJar;
+import org.mangorage.tsml.api.jar.IJar;
 
 import java.io.File;
 import java.io.IOException;
@@ -61,7 +61,7 @@ public final class WrappedJar implements IJar {
 
             try (InputStream in = jarFile.getInputStream(entry)) {
                 byte[] bytes = in.readAllBytes();
-                return new NestedJar(bytes, entry.getName(), jarFile.getName());
+                return new JarInJar(bytes, entry.getName(), jarFile.getName());
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -76,7 +76,7 @@ public final class WrappedJar implements IJar {
                 .map(e -> {
                     try (InputStream in = jarFile.getInputStream(e)) {
                         byte[] bytes = in.readAllBytes();
-                        return (IJar) new NestedJar(bytes, e.getName(), jarFile.getName());
+                        return (IJar) new JarInJar(bytes, e.getName(), jarFile.getName());
                     } catch (IOException ex) {
                         throw new RuntimeException(ex);
                     }
