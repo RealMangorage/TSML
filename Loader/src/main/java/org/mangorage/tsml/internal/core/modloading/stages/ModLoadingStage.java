@@ -1,4 +1,4 @@
-package org.mangorage.tsml.internal.core.modloading;
+package org.mangorage.tsml.internal.core.modloading.stages;
 
 import com.google.gson.Gson;
 import io.github.classgraph.ClassGraph;
@@ -9,7 +9,7 @@ import org.mangorage.tsml.api.dependency.Dependency;
 import org.mangorage.tsml.api.mod.IModContainer;
 import org.mangorage.tsml.api.mod.Mod;
 import org.mangorage.tsml.api.jar.IJar;
-import org.mangorage.tsml.internal.core.modloading.stages.ModLoadingManager;
+import org.mangorage.tsml.internal.core.modloading.ModInfo;
 import org.mangorage.tsml.internal.mod.BuiltInMod;
 
 import java.io.InputStream;
@@ -27,11 +27,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/**
- * TODO: Integrate into the {@link ModLoadingManager} system
- */
-@Deprecated
-public final class TSMLModloader {
+public final class ModLoadingStage {
 
     private static final Map<String, IModContainer> modContainerMap = new HashMap<>();
 

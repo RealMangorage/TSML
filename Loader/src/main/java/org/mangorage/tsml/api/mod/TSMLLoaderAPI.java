@@ -1,7 +1,7 @@
 package org.mangorage.tsml.api.mod;
 
 import org.mangorage.tsml.api.logger.ILoaderLogger;
-import org.mangorage.tsml.internal.core.modloading.TSMLModloader;
+import org.mangorage.tsml.internal.core.modloading.stages.ModLoadingStage;
 import org.mangorage.tsml.internal.core.modloading.stages.ModLoadingManager;
 
 import java.util.List;
@@ -22,10 +22,10 @@ public final class TSMLLoaderAPI {
     }
 
     public static List<IModContainer> getAllMods() {
-        return TSMLModloader.getAllMods();
+        return ModLoadingStage.getAllMods();
     }
 
     public static Optional<IModContainer> getMod(String id) {
-        return Optional.ofNullable(TSMLModloader.getMod(id));
+        return Optional.ofNullable(ModLoadingStage.getMod(id));
     }
 }

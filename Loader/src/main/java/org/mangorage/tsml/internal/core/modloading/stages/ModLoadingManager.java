@@ -5,10 +5,8 @@ import org.mangorage.tsml.api.mod.Environment;
 import org.mangorage.tsml.api.mod.IModPreLaunch;
 import org.mangorage.tsml.api.mod.ModLoadingState;
 import org.mangorage.tsml.api.jar.IJar;
-import org.mangorage.tsml.internal.core.modloading.TSMLModloader;
 
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.ServiceLoader;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -19,10 +17,7 @@ public final class ModLoadingManager {
     // Get all the nested jars from TSML itself, and return the TriviaSpire jar.
     private static final InitialDiscoveryStage INITIAL_DISCOVERY_STAGE = new InitialDiscoveryStage();
 
-    // Allow mods and such to define their own jars to be located... // TODO
-    private static final ConfigurationDiscoveryStage CONFIGURATION_DISCOVERY_STAGE = new ConfigurationDiscoveryStage();
-
-    // Take in the discovered jars, and setup the classloader.
+    // Take in the discovered jars, and set up the classloader.
     private static final ModSetupStage MOD_SETUP_STAGE = new ModSetupStage();
 
     private static volatile ModLoadingState state = ModLoadingState.NOT_LOADED;
@@ -57,23 +52,18 @@ public final class ModLoadingManager {
 
         final IJar triviaSpireJar = INITIAL_DISCOVERY_STAGE.run(baseResource, discoveredJars);
 
-        state = ModLoadingState.CONFIGURATION_SETUP;
-        CONFIGURATION_DISCOVERY_STAGE.run();
-
         state = ModLoadingState.MOD_DISCOVERY;
         final ModSetupStage.StageResult initialStageResult = MOD_SETUP_STAGE.run(discoveredJars, triviaSpireJar, ModLoadingManager::setupLogger, ModLoadingManager::setEnvironment);
 
         state = ModLoadingState.MOD_SCANNING;
-        TSMLModloader.scanMods(initialStageResult.foundClass(), args);
+        ModLoadingStage.scanMods(initialStageResult.foundClass(), args);
 
         state = ModLoadingState.MOD_PRE_LOAD;
         ServiceLoader.load(IModPreLaunch.class, initialStageResult.classloader()).forEach(IModPreLaunch::onPreLaunch);
 
         state = ModLoadingState.MOD_LOADING;
+        ModLoadingStage.initMods();
 
-        TSMLModloader.initMods();
-
-        state = ModLoadingState.LOADING_STATE;
         state = ModLoadingState.FINISHED;
     }
 

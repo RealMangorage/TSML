@@ -14,12 +14,6 @@ import java.util.stream.Collectors;
 
 public final class WrappedJar implements IJar {
 
-    private final JarFile jarFile;
-
-    public WrappedJar(JarFile jarFile) {
-        this.jarFile = jarFile;
-    }
-
     // -------------------- Factory --------------------
     public static IJar create(Path path) {
         try { return new WrappedJar(new JarFile(path.toFile())); }
@@ -36,7 +30,16 @@ public final class WrappedJar implements IJar {
         catch (IOException e) { throw new RuntimeException(e); }
     }
 
-    public static IJar create(JarFile jarFile) { return new WrappedJar(jarFile); }
+    private final JarFile jarFile;
+
+    public WrappedJar(JarFile jarFile) {
+        this.jarFile = jarFile;
+    }
+
+
+    public static IJar create(JarFile jarFile) {
+        return new WrappedJar(jarFile);
+    }
 
     @Override
     public String getName() {
@@ -66,22 +69,6 @@ public final class WrappedJar implements IJar {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    @Override
-    public List<IJar> getNestedJars() {
-        return jarFile.stream()
-                .filter(e -> !e.isDirectory())
-                .filter(e -> e.getName().endsWith(".jar"))
-                .map(e -> {
-                    try (InputStream in = jarFile.getInputStream(e)) {
-                        byte[] bytes = in.readAllBytes();
-                        return (IJar) new JarInJar(bytes, e.getName(), jarFile.getName());
-                    } catch (IOException ex) {
-                        throw new RuntimeException(ex);
-                    }
-                })
-                .collect(Collectors.toList());
     }
 
     @Override

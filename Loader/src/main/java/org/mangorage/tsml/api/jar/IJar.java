@@ -15,9 +15,6 @@ public interface IJar {
     /** Get a nested jar by path, e.g. "libs/foo.jar" */
     IJar getNestedJar(String path) throws IOException;
 
-    /** List all nested jars inside this jar */
-    List<IJar> getNestedJars() throws IOException;
-
     /* =========================
        File access API
        ========================= */

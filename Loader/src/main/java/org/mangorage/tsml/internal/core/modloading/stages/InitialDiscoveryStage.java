@@ -2,6 +2,7 @@ package org.mangorage.tsml.internal.core.modloading.stages;
 
 import org.mangorage.tsml.internal.core.jarjar.WrappedJar;
 import org.mangorage.tsml.api.jar.IJar;
+import org.mangorage.tsml.internal.core.modloading.JarJarResolver;
 
 import java.io.IOException;
 import java.net.URL;
@@ -10,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Stream;
 
 public final class InitialDiscoveryStage {
@@ -40,12 +42,14 @@ public final class InitialDiscoveryStage {
 
     /**
      * @param baseResource → Will be the TSML jar itself
-     * @param foundJars → Add any jars you want exposed.
+     * @param finalJars → Add any jars you want exposed.
      * @return The main TriviaSpire.jar, used for the next stage to find the main class and logger class.
      */
-    public IJar run(URL baseResource, List<IJar> foundJars) throws IOException {
+    public IJar run(URL baseResource, List<IJar> finalJars) throws IOException {
         Path rootPath = Path.of("");
         Path modsPath = rootPath.resolve("mods").toAbsolutePath();
+
+        List<IJar> foundJars = new CopyOnWriteArrayList<>();
 
         IJar triviaSpireJar = findJarPaths(rootPath)
                 .stream()
@@ -58,49 +62,22 @@ public final class InitialDiscoveryStage {
 
         IJar tsmlJar = WrappedJar.create(baseResource.getFile());
 
-        foundJars.addAll(
-                tsmlJar.getNestedJars()
-                        .stream()
-                        .filter(jar -> !jar.getName().contains("JarJarLoader/") && jar.getName().contains("jarjar") && jar.getName().endsWith(".jar"))
-                        .toList()
-        );
+        foundJars.add(tsmlJar);
 
         if (Files.exists(modsPath)) {
             try (Stream<Path> stream = Files.list(modsPath)) {
                 stream
                         .filter(Files::isRegularFile)
                         .map(path -> WrappedJar.create(path.toFile()))
-                        .forEach(foundJar -> {
-                            foundJars.add(foundJar);
-                            try {
-                                foundJars.addAll(foundJar.getNestedJars());
-                            } catch (IOException e) {
-                                throw new RuntimeException(e);
-                            }
-                        });
+                        .forEach(foundJars::add);
             }
         }
 
-        foundJars.forEach(jar -> {
-            try {
-                scan(jar, foundJars);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
+        final List<IJar> resolvedJars = JarJarResolver.resolveAll(foundJars);
+
+        finalJars.addAll(resolvedJars);
 
         return triviaSpireJar;
     }
 
-    void scan(IJar jar, List<IJar> jars) throws IOException {
-        final var nested = jar.getNestedJars();
-        jars.addAll(nested);
-        nested.forEach(nJar -> {
-            try {
-                scan(nJar, jars);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-    }
 }

@@ -40,6 +40,7 @@ dependencies {
     jarJarLoader('io.github.classgraph:classgraph:4.8.179')
     jarJarLoader('com.google.code.gson:gson:2.10.1')
 
+    jarJar 'org.ow2.asm:asm:9.1'
     jarJar(project(":BuiltInMods:TSMLMixin"))
     jarJar(project(":BuiltInMods:TSMLCore"))
     jarJar(project(":BuiltInMods:ExampleMod"))

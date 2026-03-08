@@ -1,7 +1,8 @@
-package org.mangorage.tsml.internal.core.modloading;
+package org.mangorage.tsml.internal.core.modloading.stages;
 
 import org.mangorage.tsml.api.dependency.Dependency;
 import org.mangorage.tsml.api.mod.IModContainer;
+import org.mangorage.tsml.internal.core.modloading.ModInfo;
 
 import java.util.List;
 import java.util.Optional;

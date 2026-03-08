@@ -68,23 +68,6 @@ public final class JarInJar implements IJar {
         return null;
     }
 
-    @Override
-    public List<IJar> getNestedJars() {
-        List<IJar> nested = new ArrayList<>();
-        try (JarInputStream jis = new JarInputStream(new ByteArrayInputStream(jarBytes))) {
-            JarEntry entry;
-            while ((entry = jis.getNextJarEntry()) != null) {
-                if (!entry.isDirectory() && entry.getName().endsWith(".jar")) {
-                    byte[] bytes = jis.readAllBytes();
-                    nested.add(new JarInJar(bytes, entry.getName(), originPath + "!/" + name));
-                }
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return nested;
-    }
-
     // ---------------- File Access ----------------
     @Override
     public boolean exists(String path) {
