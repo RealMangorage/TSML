@@ -14,16 +14,19 @@ public final class TriviaSpireMod {
             final String mainClass = mod.getProperty("mainClass", String.class).orElseThrow(() -> new IllegalArgumentException("Trivia Spire mod is missing mainClass property"));
 
             final String[] args = mod.getProperty("args", String[].class).orElse(new String[0]);
-
-            try {
-                final var clazz = Class.forName(mainClass, false, Thread.currentThread().getContextClassLoader());
-                clazz.getMethod("main", String[].class).invoke(null, (Object) args);
-            } catch (ClassNotFoundException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-                TSMLLogger.getInternal().error("Something went wrong while starting Trivia Spire mod:");
-                TSMLLogger.getInternal().error(e);
-
-                e.printStackTrace();
-            }
+            init(mainClass, args);
         });
+    }
+
+    public void init(String mainClass, String[] args) {
+        try {
+            final var clazz = Class.forName(mainClass, false, Thread.currentThread().getContextClassLoader());
+            clazz.getMethod("main", String[].class).invoke(null, (Object) args);
+        } catch (ClassNotFoundException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+            TSMLLogger.getInternal().error("Something went wrong while starting Trivia Spire mod:");
+            TSMLLogger.getInternal().error(e);
+
+            e.printStackTrace();
+        }
     }
 }

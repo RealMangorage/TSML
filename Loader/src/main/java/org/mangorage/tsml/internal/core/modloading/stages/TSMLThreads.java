@@ -12,7 +12,7 @@ public final class TSMLThreads {
                 @Override
                 public Thread newThread(Runnable r) {
                     Thread t = new Thread(r, "TSML-Worker-" + counter.getAndIncrement());
-                    t.setDaemon(true);
+                    t.setDaemon(false);
                     return t;
                 }
             }
