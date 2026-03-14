@@ -3,7 +3,6 @@ package org.mangorage.tsml.internal.core.modloading.stages;
 import org.mangorage.tsml.api.classloader.ITSMLClassloader;
 import org.mangorage.tsml.api.jar.IJar;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -89,38 +88,38 @@ public sealed class JarClassloader extends SecureClassLoader implements ITSMLCla
 
     // ------------------- Resource Handling -------------------
 
+    private URL createURL(String name, IJar jar) {
+        try {
+            return new URL(null, "memory:" + name, new URLStreamHandler() {
+                @Override
+                protected URLConnection openConnection(URL u) {
+                    return new URLConnection(u) {
+                        @Override
+                        public void connect() { }
+
+                        @Override
+                        public InputStream getInputStream() {
+                            return jar.getInputStream(name);
+                        }
+                    };
+                }
+            });
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @Override
     public URL getResource(String name) {
-        byte[] data = getResourceBytes(name);
-        if (data != null) {
-            try {
-                return new URL(null, "memory:" + name, new URLStreamHandler() {
-                    @Override
-                    protected URLConnection openConnection(URL u) {
-                        return new URLConnection(u) {
-                            @Override
-                            public void connect() { }
-
-                            @Override
-                            public InputStream getInputStream() {
-                                return new ByteArrayInputStream(data);
-                            }
-                        };
-                    }
-                });
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        return getParent().getResource(name);
+        final var jar = getJarForFirstResource(name);
+        return jar == null ? getParent().getResource(name) : createURL(name, jar);
     }
 
     @Override
     public InputStream getResourceAsStream(String name) {
-        byte[] data = getResourceBytes(name);
-        if (data != null) return new ByteArrayInputStream(data);
-        return getParent().getResourceAsStream(name);
+        final var jar = getJarForFirstResource(name);
+        final var is = jar != null ? jar.getInputStream(name) : null;
+        return is != null ? is : getParent().getResourceAsStream(name);
     }
 
     @Override
@@ -129,25 +128,11 @@ public sealed class JarClassloader extends SecureClassLoader implements ITSMLCla
 
         for (IJar jar : jars) {
             if (jar.exists(name)) {
-                byte[] data = jar.readBytes(name);
-                if (data != null) {
-                    try {
-                        URL url = new URL(null, "memory:" + name, new URLStreamHandler() {
-                            @Override
-                            protected URLConnection openConnection(URL u) {
-                                return new URLConnection(u) {
-                                    @Override
-                                    public void connect() { }
-
-                                    @Override
-                                    public InputStream getInputStream() {
-                                        return new ByteArrayInputStream(data);
-                                    }
-                                };
-                            }
-                        });
-                        urls.add(url);
-                    } catch (Exception ignored) { }
+                try {
+                    URL url = createURL(name, jar);
+                    urls.add(url);
+                } catch (Exception e) {
+                    System.err.println("Failed to create URL for resource " + name + " in jar " + jar.getName() + ": " + e.getMessage());
                 }
             }
         }
@@ -158,15 +143,19 @@ public sealed class JarClassloader extends SecureClassLoader implements ITSMLCla
         return Collections.enumeration(urls);
     }
 
-    private byte[] getResourceBytes(String name) {
+    /*
+        USEFUL HELPERS
+     */
+    private IJar getJarForFirstResource(String name) {
         for (IJar jar : jars) {
-            if (jar.exists(name)) {
-                byte[] bytes = jar.readBytes(name);
-                if (bytes != null) return bytes;
-            }
+            if (jar.exists(name))
+                return jar;
         }
+        return null;
+    }
 
-        try (InputStream is = getParent().getResourceAsStream(name)) {
+    private byte[] getResourceBytes(String name) {
+        try (InputStream is = getResourceAsStream(name)) {
             if (is == null) return null;
             return is.readAllBytes();
         } catch (Exception e) {
