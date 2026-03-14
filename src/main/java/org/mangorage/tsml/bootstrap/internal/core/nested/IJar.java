@@ -1,4 +1,4 @@
-package org.mangorage.tsml.bootstrap.internal.core.nested.api;
+package org.mangorage.tsml.bootstrap.internal.core.nested;
 
 import java.io.IOException;
 import java.io.InputStream;

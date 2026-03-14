@@ -204,7 +204,7 @@ public final class ModLoadingStage {
             // Initialize
             TSMLLogger.getInternal().info("Initializing mod: " + id);
 
-            Thread modThread = new Thread(() -> {
+            TSMLThreads.run(() -> {
                 try {
                     ((ModContainerImpl) mod).init();
                     TSMLLogger.getInternal().info("Initialized mod: " + id);
@@ -212,9 +212,7 @@ public final class ModLoadingStage {
                     TSMLLogger.getInternal().warn("Failed to initialize mod: " + id);
                     TSMLLogger.getInternal().error(e);
                 }
-            }, "Mod-Init-" + id);
-
-            modThread.start();
+            });
         }
     }
 

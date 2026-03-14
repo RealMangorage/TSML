@@ -2,7 +2,7 @@ package org.mangorage.tsml.bootstrap;
 
 import org.mangorage.tsml.bootstrap.internal.TSMLDefaultLogger;
 import org.mangorage.tsml.bootstrap.internal.core.nested.WrappedJar;
-import org.mangorage.tsml.bootstrap.internal.core.nested.api.IJar;
+import org.mangorage.tsml.bootstrap.internal.core.nested.IJar;
 import java.net.URL;
 import java.util.List;
 
@@ -12,6 +12,8 @@ public final class Bootstrap {
 
     public static void main(String[] args) {
         try {
+            final var time = System.currentTimeMillis();
+
             URL bootstrapJarURL = Bootstrap.class.getProtectionDomain().getCodeSource().getLocation();
             IJar bootstrapJar = WrappedJar.create(bootstrapJarURL.getFile());
 
@@ -43,6 +45,7 @@ public final class Bootstrap {
             final var method = mainClass.getMethod("run", URL.class, String[].class);
             TSMLDefaultLogger.getInstance().info("Invoking TSML initPublic method...");
             TSMLDefaultLogger.getInstance().info(method.toString());
+            System.out.println("Time: " + (System.currentTimeMillis() - time));
             method.invoke(null, bootstrapJarURL, (Object) args);
         } catch (Throwable e) {
             TSMLDefaultLogger.getInstance().error("Failed to start TSML:");

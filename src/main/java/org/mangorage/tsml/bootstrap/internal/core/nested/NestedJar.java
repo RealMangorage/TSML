@@ -1,7 +1,5 @@
 package org.mangorage.tsml.bootstrap.internal.core.nested;
 
-import org.mangorage.tsml.bootstrap.internal.core.nested.api.IJar;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;

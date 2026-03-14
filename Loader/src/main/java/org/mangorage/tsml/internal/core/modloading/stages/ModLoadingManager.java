@@ -65,6 +65,8 @@ public final class ModLoadingManager {
         ModLoadingStage.initMods();
 
         state = ModLoadingState.FINISHED;
+
+        Thread.sleep(10000);
     }
 
     public static void run(URL baseResource, String[] args) throws Exception {

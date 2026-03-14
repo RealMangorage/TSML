@@ -15,6 +15,10 @@ import java.util.*;
 
 public sealed class JarClassloader extends SecureClassLoader implements ITSMLClassloader permits TSMLClassloader {
 
+    static {
+        ClassLoader.registerAsParallelCapable();
+    }
+
     private final List<IJar> jars;
     private final Set<String> loaded = new HashSet<>();
 
@@ -45,6 +49,8 @@ public sealed class JarClassloader extends SecureClassLoader implements ITSMLCla
 
     @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException {
+        final var time = System.currentTimeMillis();
+
         Class<?> loadedClass = findLoadedClass(name);
         if (loadedClass != null) return loadedClass;
 
@@ -55,8 +61,9 @@ public sealed class JarClassloader extends SecureClassLoader implements ITSMLCla
         }
 
         try {
+            final var definedClass = defineClass(name, classBytes, 0, classBytes.length);
             loaded.add(name);
-            return defineClass(name, classBytes, 0, classBytes.length, getClassProtectionDomain(name));
+            return definedClass;
         } catch (Exception e) {
             throw new ClassNotFoundException("Failed to define class: " + name, e);
         }

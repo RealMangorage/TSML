@@ -7,6 +7,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public final class TSMLClassloader extends JarClassloader {
 
+    static {
+        ClassLoader.registerAsParallelCapable();
+    }
+
     private final List<IClassTransformer> transformers = new CopyOnWriteArrayList<>();
 
     TSMLClassloader(List<IJar> jars, ClassLoader parent) {
@@ -18,11 +22,13 @@ public final class TSMLClassloader extends JarClassloader {
         ServiceLoader.load(IClassTransformer.class, this)
                 .stream()
                 .forEach(provider -> {
-                    try {
-                        transformers.add(provider.get());
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+                    TSMLThreads.run(() -> {
+                        try {
+                            transformers.add(provider.get());
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    });
                 });
     }
 
