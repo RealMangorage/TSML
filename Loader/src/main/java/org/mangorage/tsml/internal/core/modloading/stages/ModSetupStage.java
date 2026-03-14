@@ -8,6 +8,7 @@ import org.mangorage.tsml.api.jar.IJar;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.ServiceLoader;
 import java.util.function.Consumer;
@@ -27,10 +28,37 @@ public final class ModSetupStage {
         }
     }
 
+    enum TSMLType {
+        MOD,
+        LIBRARY
+    }
+
+    static TSMLType getType(IJar jar) {
+        try {
+            final var attribute = jar.getManifestAttribute("TSMLType");
+            if (attribute == null) return TSMLType.LIBRARY;
+            if (attribute.equalsIgnoreCase("mod")) return TSMLType.MOD;
+        } catch (IOException e) {
+            TSMLLogger.getLogger().warn("Failed to read manifest of jar: " + jar.getName());
+        }
+        return TSMLType.LIBRARY;
+    }
+
     StageResult run(List<IJar> classpathJars, IJar triviaJar, Consumer<ILoaderLogger> loaderLoggerConsumer, Consumer<Environment> environmentConsumer) throws ClassNotFoundException, IOException {
-        classpathJars.add(triviaJar);
+        List<IJar> libraryJars = classpathJars.stream()
+                .filter(jar -> getType(jar) == TSMLType.LIBRARY)
+                .toList();
+
+        List<IJar> modJars = new ArrayList<>(
+                classpathJars.stream()
+                        .filter(jar -> getType(jar) == TSMLType.MOD)
+                        .toList()
+        );
+
+        modJars.add(triviaJar); // Make it transformable...
+
         final ClassLoader current = Thread.currentThread().getContextClassLoader();
-        final TSMLClassloader tsmlClassloader = new TSMLClassloader(classpathJars, current);
+        final TSMLClassloader tsmlClassloader = new TSMLClassloader(modJars, new JarClassloader(libraryJars, current));
         Thread.currentThread().setContextClassLoader(tsmlClassloader);
 
         Class.forName("org.tinylog.converters.GzipEncoder", false, tsmlClassloader);

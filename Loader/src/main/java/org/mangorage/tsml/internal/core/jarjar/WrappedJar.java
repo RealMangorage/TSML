@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 
 public final class WrappedJar implements IJar {
@@ -115,5 +116,10 @@ public final class WrappedJar implements IJar {
     public boolean isDirectory(String path) {
         JarEntry entry = jarFile.getJarEntry(path);
         return entry != null && entry.isDirectory();
+    }
+
+    @Override
+    public Manifest getManifest() throws IOException {
+        return jarFile.getManifest();
     }
 }

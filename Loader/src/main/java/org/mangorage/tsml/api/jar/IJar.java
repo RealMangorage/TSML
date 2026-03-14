@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.List;
+import java.util.jar.Manifest;
 
 public interface IJar {
 
@@ -36,4 +37,12 @@ public interface IJar {
 
     /** True if entry is a directory */
     boolean isDirectory(String path);
+
+    Manifest getManifest() throws IOException;
+
+    default String getManifestAttribute(String attribute) throws IOException {
+        final var manifest = getManifest();
+        if (manifest == null) return null;
+        return manifest.getMainAttributes().getValue(attribute);
+    }
 }

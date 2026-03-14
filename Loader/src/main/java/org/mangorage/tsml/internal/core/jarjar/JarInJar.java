@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
+import java.util.jar.Manifest;
 
 public final class JarInJar implements IJar {
 
@@ -142,5 +143,10 @@ public final class JarInJar implements IJar {
             throw new RuntimeException(e);
         }
         return false;
+    }
+
+    @Override
+    public Manifest getManifest() throws IOException {
+        return new JarInputStream(new ByteArrayInputStream(jarBytes)).getManifest();
     }
 }

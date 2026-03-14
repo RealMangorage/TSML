@@ -1,15 +1,12 @@
 package org.mangorage.tsmlmixin.mixin;
 
 import com.llamalad7.mixinextras.MixinExtrasBootstrap;
-import com.llamalad7.mixinextras.utils.MixinInternals;
-import org.objectweb.asm.tree.ClassNode;
+import org.mangorage.tsmlmixin.mixin.services.MixinBootstrapServiceImpl;
+import org.mangorage.tsmlmixin.mixin.services.TSMLMixinServiceImpl;
 import org.spongepowered.asm.launch.MixinBootstrap;
 import org.spongepowered.asm.mixin.MixinEnvironment;
-import org.spongepowered.asm.mixin.Mixins;
 import org.spongepowered.asm.mixin.transformer.IMixinTransformer;
 import org.spongepowered.asm.mixin.transformer.IMixinTransformerFactory;
-import org.spongepowered.asm.mixin.transformer.ext.Extensions;
-import org.spongepowered.asm.mixin.transformer.ext.IClassGenerator;
 
 import java.lang.reflect.Method;
 
@@ -59,6 +56,9 @@ public final class SpongeMixinImpl {
             System.setProperty("mixin.env.disableRefMap", "true");
             System.setProperty("mixin.checks", "true");
         }
+
+        System.setProperty("mixin.bootstrapService", MixinBootstrapServiceImpl.class.getName());
+        System.setProperty("mixin.service", TSMLMixinServiceImpl.class.getName());
 
         MixinBootstrap.init();
 

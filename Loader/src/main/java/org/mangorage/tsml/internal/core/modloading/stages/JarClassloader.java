@@ -1,6 +1,5 @@
 package org.mangorage.tsml.internal.core.modloading.stages;
 
-import org.mangorage.tsml.api.classloader.IClassTransformer;
 import org.mangorage.tsml.api.classloader.ITSMLClassloader;
 import org.mangorage.tsml.api.jar.IJar;
 
@@ -14,30 +13,15 @@ import java.security.CodeSource;
 import java.security.ProtectionDomain;
 import java.security.SecureClassLoader;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
 
-public final class TSMLClassloader extends SecureClassLoader implements ITSMLClassloader {
+public final class JarClassloader extends SecureClassLoader implements ITSMLClassloader {
 
     private final List<IJar> jars;
-    private final List<IClassTransformer> transformers = new CopyOnWriteArrayList<>();
     private final Set<String> loaded = new HashSet<>();
 
-    TSMLClassloader(List<IJar> jars, ClassLoader parent) {
+    JarClassloader(List<IJar> jars, ClassLoader parent) {
         super(parent);
         this.jars = jars;
-    }
-
-    void init() {
-        // Auto-load transformers
-        ServiceLoader.load(IClassTransformer.class, this)
-                .stream()
-                .forEach(provider -> {
-                    try {
-                        transformers.add(provider.get());
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                });
     }
 
     // ------------------- Class Loading -------------------
@@ -48,7 +32,7 @@ public final class TSMLClassloader extends SecureClassLoader implements ITSMLCla
         for (IJar jar : jars) {
             if (jar.exists(resourcePath)) {
                 try {
-                    URL jarUrl = jar.getURL(); // IJar should return a URL to its source
+                    URL jarUrl = jar.getURL();
                     CodeSource source = new CodeSource(jarUrl, (java.security.cert.Certificate[]) null);
                     return new ProtectionDomain(source, getPermissions(source));
                 } catch (Exception e) {
@@ -57,47 +41,23 @@ public final class TSMLClassloader extends SecureClassLoader implements ITSMLCla
             }
         }
 
-        // Could not find the class in any jar
         return null;
     }
 
     @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException {
-        final Class<?> loaded = findLoadedClass(name);
-        if (loaded != null) return loaded;
+        Class<?> loadedClass = findLoadedClass(name);
+        if (loadedClass != null) return loadedClass;
 
         byte[] classBytes = getClassBytes(name);
-        if (classBytes == null) {
-
-            for (IClassTransformer transformer : transformers) {
-                classBytes = transformer.generateClass(name);
-                if (classBytes != null)
-                    break;
-            }
-
-            // Still null, then we failed.
-            if (classBytes == null) {
-                return getParent().loadClass(name);
-            }
-        }
-
-        if (!transformers.isEmpty()) {
-            for (IClassTransformer transformer : transformers) {
-                try {
-                    byte[] transformed = transformer.transform(name, classBytes);
-                    if (transformed != null)
-                        classBytes = transformed;
-                } catch (Throwable t) {
-                    throw new IllegalStateException(t);
-                }
-            }
-        }
+        if (classBytes == null)
+            throw new ClassNotFoundException(name);
 
         try {
-            this.loaded.add(name);
+            loaded.add(name);
             return defineClass(name, classBytes, 0, classBytes.length, getClassProtectionDomain(name));
         } catch (Exception e) {
-            return getParent().loadClass(name);
+            throw new ClassNotFoundException("Failed to define class: " + name, e);
         }
     }
 
@@ -132,7 +92,7 @@ public final class TSMLClassloader extends SecureClassLoader implements ITSMLCla
                     protected URLConnection openConnection(URL u) {
                         return new URLConnection(u) {
                             @Override
-                            public void connect() { /* no-op */ }
+                            public void connect() { }
 
                             @Override
                             public InputStream getInputStream() {
@@ -160,7 +120,6 @@ public final class TSMLClassloader extends SecureClassLoader implements ITSMLCla
     public Enumeration<URL> getResources(String name) throws IOException {
         List<URL> urls = new ArrayList<>();
 
-        // Resources from jars
         for (IJar jar : jars) {
             if (jar.exists(name)) {
                 byte[] data = jar.readBytes(name);
@@ -186,7 +145,6 @@ public final class TSMLClassloader extends SecureClassLoader implements ITSMLCla
             }
         }
 
-        // Parent resources
         Enumeration<URL> parentUrls = getParent().getResources(name);
         while (parentUrls.hasMoreElements()) urls.add(parentUrls.nextElement());
 
@@ -194,7 +152,6 @@ public final class TSMLClassloader extends SecureClassLoader implements ITSMLCla
     }
 
     private byte[] getResourceBytes(String name) {
-        // Check all registered IJars
         for (IJar jar : jars) {
             if (jar.exists(name)) {
                 byte[] bytes = jar.readBytes(name);
@@ -202,7 +159,6 @@ public final class TSMLClassloader extends SecureClassLoader implements ITSMLCla
             }
         }
 
-        // Fallback: parent classloader
         try (InputStream is = getParent().getResourceAsStream(name)) {
             if (is == null) return null;
             return is.readAllBytes();

@@ -83,3 +83,11 @@ tasks.jarJar {
 artifacts {
     archives(tasks.jarJar)
 }
+
+jar {
+    manifest {
+        attributes(
+                "TSMLType": "LIBRARY"
+        )
+    }
+}

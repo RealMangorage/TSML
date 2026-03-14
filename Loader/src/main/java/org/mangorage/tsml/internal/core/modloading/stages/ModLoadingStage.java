@@ -71,9 +71,7 @@ public final class ModLoadingStage {
         );
     }
 
-    public static List<String> getClasspathAsStrings() {
-        ClassLoader cl = Thread.currentThread().getContextClassLoader();
-
+    public static List<String> getClasspathAsStrings(ClassLoader cl) {
         if (cl instanceof ITSMLClassloader iJarCl) {
             // Map the IJar list to string representations (e.g., jar paths or names)
             return iJarCl.getJars().stream()
@@ -108,12 +106,15 @@ public final class ModLoadingStage {
                 )
         );
 
+        final List<String> classpath = new ArrayList<>(getClasspathAsStrings(Thread.currentThread().getContextClassLoader()));
+        classpath.addAll(getClasspathAsStrings(Thread.currentThread().getContextClassLoader().getParent()));
+
         try (ScanResult scanResult = new ClassGraph()
                 .enableAnnotationInfo()         // Required to find @Annotation
                 .enableClassInfo()
                 .enableRemoteJarScanning()
                 .addClassLoader(Thread.currentThread().getContextClassLoader())
-                .overrideClasspath(getClasspathAsStrings())
+                .overrideClasspath(classpath)
                 .scan()
         ) {
 

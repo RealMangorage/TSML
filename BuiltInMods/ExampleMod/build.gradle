@@ -21,3 +21,11 @@ processResources {
         expand "version": project.version
     }
 }
+
+jar {
+    manifest {
+        attributes(
+                "TSMLType": "MOD"
+        )
+    }
+}
