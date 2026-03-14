@@ -28,7 +28,11 @@ public final class SpongeMixinClassTransformerImpl implements IClassTransformer 
             }
         }
 
-        var transformer = SpongeMixinImpl.getTransformer();
+        final var transformer = SpongeMixinImpl.getTransformer();
+        final var env = MixinEnvironment.getCurrentEnvironment();
+
+        if (!transformer.couldTransformClass(env, name))
+            return null;
 
         var transformed = transformer.transformClass(
                 MixinEnvironment.getCurrentEnvironment(),

@@ -57,14 +57,12 @@ public final class SpongeMixinImpl {
             System.setProperty("mixin.checks", "true");
         }
 
-        System.setProperty("mixin.bootstrapService", MixinBootstrapServiceImpl.class.getName());
-        System.setProperty("mixin.service", TSMLMixinServiceImpl.class.getName());
-
         MixinBootstrap.init();
 
         completeMixinBootstrap();
 
         MixinExtrasBootstrap.init();
+
     }
 
 }

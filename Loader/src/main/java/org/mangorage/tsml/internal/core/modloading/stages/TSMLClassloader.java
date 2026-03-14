@@ -19,17 +19,19 @@ public final class TSMLClassloader extends JarClassloader {
 
     void init() {
         // Auto-load transformers
-//        ServiceLoader.load(IClassTransformer.class, this)
-//                .stream()
-//                .forEach(provider -> {
-//                    TSMLThreads.run(() -> {
-//                        try {
-//                            transformers.add(provider.get());
-//                        } catch (Exception e) {
-//                            e.printStackTrace();
-//                        }
-//                    });
-//                });
+        TSMLThreads.run(() -> {
+            ServiceLoader.load(IClassTransformer.class, this)
+                    .stream()
+                    .forEach(provider -> {
+                        TSMLThreads.run(() -> {
+                            try {
+                                transformers.add(provider.get());
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        });
+                    });
+        });
     }
 
     /**
