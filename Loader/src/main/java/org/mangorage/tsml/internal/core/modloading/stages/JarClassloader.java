@@ -14,7 +14,7 @@ import java.security.ProtectionDomain;
 import java.security.SecureClassLoader;
 import java.util.*;
 
-public final class JarClassloader extends SecureClassLoader implements ITSMLClassloader {
+public sealed class JarClassloader extends SecureClassLoader implements ITSMLClassloader permits TSMLClassloader {
 
     private final List<IJar> jars;
     private final Set<String> loaded = new HashSet<>();
@@ -49,9 +49,11 @@ public final class JarClassloader extends SecureClassLoader implements ITSMLClas
         Class<?> loadedClass = findLoadedClass(name);
         if (loadedClass != null) return loadedClass;
 
-        byte[] classBytes = getClassBytes(name);
-        if (classBytes == null)
-            throw new ClassNotFoundException(name);
+        byte[] classBytes = maybeTransform(name, getClassBytes(name));
+
+        if (classBytes == null) {
+            throw new ClassNotFoundException("Class not found: " + name);
+        }
 
         try {
             loaded.add(name);
@@ -59,6 +61,11 @@ public final class JarClassloader extends SecureClassLoader implements ITSMLClas
         } catch (Exception e) {
             throw new ClassNotFoundException("Failed to define class: " + name, e);
         }
+    }
+
+    // Transformer code
+    protected byte[] maybeTransform(String name, byte[] original) {
+        return original;
     }
 
     // ------------------- ITSMLClassloader -------------------

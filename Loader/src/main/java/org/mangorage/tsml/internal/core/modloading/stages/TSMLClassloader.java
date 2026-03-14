@@ -1,30 +1,16 @@
 package org.mangorage.tsml.internal.core.modloading.stages;
 
 import org.mangorage.tsml.api.classloader.IClassTransformer;
-import org.mangorage.tsml.api.classloader.ITSMLClassloader;
 import org.mangorage.tsml.api.jar.IJar;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.net.URLConnection;
-import java.net.URLStreamHandler;
-import java.security.CodeSource;
-import java.security.ProtectionDomain;
-import java.security.SecureClassLoader;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public final class TSMLClassloader extends SecureClassLoader implements ITSMLClassloader {
+public final class TSMLClassloader extends JarClassloader {
 
-    private final List<IJar> jars;
     private final List<IClassTransformer> transformers = new CopyOnWriteArrayList<>();
-    private final Set<String> loaded = new HashSet<>();
 
     TSMLClassloader(List<IJar> jars, ClassLoader parent) {
-        super(parent);
-        this.jars = jars;
+        super(jars, parent);
     }
 
     void init() {
@@ -40,174 +26,35 @@ public final class TSMLClassloader extends SecureClassLoader implements ITSMLCla
                 });
     }
 
-    // ------------------- Class Loading -------------------
-
-    private ProtectionDomain getClassProtectionDomain(String className) {
-        String resourcePath = className.replace('.', '/') + ".class";
-
-        for (IJar jar : jars) {
-            if (jar.exists(resourcePath)) {
-                try {
-                    URL jarUrl = jar.getURL(); // IJar should return a URL to its source
-                    CodeSource source = new CodeSource(jarUrl, (java.security.cert.Certificate[]) null);
-                    return new ProtectionDomain(source, getPermissions(source));
-                } catch (Exception e) {
-                    throw new RuntimeException("Failed to create ProtectionDomain for class " + className, e);
-                }
-            }
-        }
-
-        // Could not find the class in any jar
-        return null;
-    }
-
+    /**
+     * @param name -> Name of the class we want to transform
+     * @param original -> The Class bytes associated with it, can be null, which means we need to generate the class fresh.
+     * @return The transformed class bytes, or the original if no transformations were applied.
+     */
     @Override
-    protected Class<?> findClass(String name) throws ClassNotFoundException {
-        final Class<?> loaded = findLoadedClass(name);
-        if (loaded != null) return loaded;
+    protected byte[] maybeTransform(String name, final byte[] original) {
+        byte[] finishedClassbytes = original;
 
-        byte[] classBytes = getClassBytes(name);
-        if (classBytes == null) {
-
-            for (IClassTransformer transformer : transformers) {
-                classBytes = transformer.generateClass(name);
-                if (classBytes != null)
-                    break;
-            }
-
-            // Still null, then we failed.
-            if (classBytes == null) {
-                return getParent().loadClass(name);
-            }
-        }
-
-        if (!transformers.isEmpty()) {
-            for (IClassTransformer transformer : transformers) {
-                try {
-                    byte[] transformed = transformer.transform(name, classBytes);
-                    if (transformed != null)
-                        classBytes = transformed;
-                } catch (Throwable t) {
-                    throw new IllegalStateException(t);
-                }
-            }
-        }
-
-        try {
-            this.loaded.add(name);
-            return defineClass(name, classBytes, 0, classBytes.length, getClassProtectionDomain(name));
-        } catch (Exception e) {
-            return getParent().loadClass(name);
-        }
-    }
-
-    // ------------------- ITSMLClassloader -------------------
-
-    @Override
-    public byte[] getClassBytes(String name) {
-        String path = name.replace('.', '/') + ".class";
-        return getResourceBytes(path);
-    }
-
-    @Override
-    public boolean hasClass(final String name) {
-        if (!loaded.contains("Launcher")) return false;
-        return findLoadedClass(name.replace('/', '.')) != null;
-    }
-
-    @Override
-    public List<IJar> getJars() {
-        return Collections.unmodifiableList(jars);
-    }
-
-    // ------------------- Resource Handling -------------------
-
-    @Override
-    public URL getResource(String name) {
-        byte[] data = getResourceBytes(name);
-        if (data != null) {
-            try {
-                return new URL(null, "memory:" + name, new URLStreamHandler() {
-                    @Override
-                    protected URLConnection openConnection(URL u) {
-                        return new URLConnection(u) {
-                            @Override
-                            public void connect() { /* no-op */ }
-
-                            @Override
-                            public InputStream getInputStream() {
-                                return new ByteArrayInputStream(data);
-                            }
-                        };
+        if (transformers.isEmpty()) { // No transformers, skip the loop and just return the original to save time.
+            return super.maybeTransform(name, original);
+        } else {
+            if (finishedClassbytes == null) {
+                for (IClassTransformer transformer : transformers) {
+                    finishedClassbytes = transformer.generateClass(name);
+                    if (finishedClassbytes != null) {
+                        break; // We only want to generate once, if multiple transformers generate the same class, the first one wins.
                     }
-                });
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        return getParent().getResource(name);
-    }
-
-    @Override
-    public InputStream getResourceAsStream(String name) {
-        byte[] data = getResourceBytes(name);
-        if (data != null) return new ByteArrayInputStream(data);
-        return getParent().getResourceAsStream(name);
-    }
-
-    @Override
-    public Enumeration<URL> getResources(String name) throws IOException {
-        List<URL> urls = new ArrayList<>();
-
-        // Resources from jars
-        for (IJar jar : jars) {
-            if (jar.exists(name)) {
-                byte[] data = jar.readBytes(name);
-                if (data != null) {
-                    try {
-                        URL url = new URL(null, "memory:" + name, new URLStreamHandler() {
-                            @Override
-                            protected URLConnection openConnection(URL u) {
-                                return new URLConnection(u) {
-                                    @Override
-                                    public void connect() { }
-
-                                    @Override
-                                    public InputStream getInputStream() {
-                                        return new ByteArrayInputStream(data);
-                                    }
-                                };
-                            }
-                        });
-                        urls.add(url);
-                    } catch (Exception ignored) { }
                 }
             }
         }
 
-        // Parent resources
-        Enumeration<URL> parentUrls = getParent().getResources(name);
-        while (parentUrls.hasMoreElements()) urls.add(parentUrls.nextElement());
-
-        return Collections.enumeration(urls);
-    }
-
-    private byte[] getResourceBytes(String name) {
-        // Check all registered IJars
-        for (IJar jar : jars) {
-            if (jar.exists(name)) {
-                byte[] bytes = jar.readBytes(name);
-                if (bytes != null) return bytes;
-            }
+        // Then apply transformations to the generated or loaded class bytes.
+        for (IClassTransformer transformer : transformers) {
+            final byte[] transformed = transformer.transform(name, finishedClassbytes);
+            if (transformed != null)
+                finishedClassbytes = transformed; // If a transformer returns null, it means it doesn't want to transform this class, so we keep the current bytes.
         }
 
-        // Fallback: parent classloader
-        try (InputStream is = getParent().getResourceAsStream(name)) {
-            if (is == null) return null;
-            return is.readAllBytes();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        return finishedClassbytes;
     }
 }
