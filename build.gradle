@@ -80,3 +80,11 @@ tasks.register('runGame', JavaExec) {
 
     jvmArgs '-Xms512M', '-Xmx2G'
 }
+
+jar {
+    manifest {
+        attributes(
+                'Main-Class': application.mainClass
+        )
+    }
+}
