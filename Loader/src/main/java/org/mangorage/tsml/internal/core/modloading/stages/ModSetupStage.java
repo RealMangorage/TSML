@@ -2,6 +2,7 @@ package org.mangorage.tsml.internal.core.modloading.stages;
 
 import org.mangorage.jar.IJar;
 import org.mangorage.jar.JarClassloader;
+import org.mangorage.jar.SpeedyJarClassLoader;
 import org.mangorage.tsml.api.TSMLLogger;
 import org.mangorage.tsml.api.logger.ILoaderLogger;
 import org.mangorage.tsml.api.mod.Environment;
@@ -55,7 +56,7 @@ public final class ModSetupStage {
         modJars.add(triviaJar); // Make it transformable...
 
         final ClassLoader current = Thread.currentThread().getContextClassLoader();
-        final TSMLClassloader tsmlClassloader = new TSMLClassloader(modJars, new JarClassloader(libraryJars, current));
+        final TSMLClassloader tsmlClassloader = new TSMLClassloader(modJars, new SpeedyJarClassLoader(libraryJars, current));
         Thread.currentThread().setContextClassLoader(tsmlClassloader);
 
         tsmlClassloader.loadClass("org.tinylog.converters.GzipEncoder");

@@ -5,6 +5,7 @@ import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.VFS;
 import org.mangorage.jar.IJar;
 import org.mangorage.jar.JarClassloader;
+import org.mangorage.jar.SpeedyJarClassLoader;
 import org.mangorage.jar.VFSJar;
 import org.mangorage.tsml.bootstrap.internal.TSMLDefaultLogger;
 import java.net.URL;
@@ -65,7 +66,7 @@ public final class Bootstrap {
 
             TSMLDefaultLogger.getInstance().info("Creating classloader and starting TSML...");
 
-            final var bootstrapClassloader = new JarClassloader(loaderJars, Bootstrap.class.getClassLoader());
+            final var bootstrapClassloader = new SpeedyJarClassLoader(loaderJars, Bootstrap.class.getClassLoader());
 
             Thread.currentThread().setContextClassLoader(bootstrapClassloader);
             final var mainClass = Class.forName(LAUNCH_CLASS, true, bootstrapClassloader);

@@ -26,6 +26,8 @@ public interface IJar {
        File access API
        ========================= */
 
+    URL findResource(String name);
+
     /** Returns true if this path exists in the jar */
     boolean exists(String path);
 

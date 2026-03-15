@@ -5,11 +5,11 @@ import org.apache.commons.vfs2.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 
@@ -17,11 +17,10 @@ public final class VFSJar implements IJar {
 
     // -------------------- Static Factories --------------------
 
-    /** For physical jars on the disk (Your F: drive projects) */
+    /** For physical jars on disk */
     public static IJar create(Path path) {
         try {
             FileSystemManager manager = VFS.getManager();
-            // jar:file:///F:/.../TSML.jar!/
             String uri = "jar:" + path.toUri().toString() + "!/";
             return new VFSJar(manager.resolveFile(uri));
         } catch (FileSystemException e) {
@@ -30,15 +29,10 @@ public final class VFSJar implements IJar {
     }
 
     public static IJar create(URL url) {
-        return create(
-                new File(
-                        url.getFile()
-                ).toPath()
-
-        );
+        return create(new File(url.getFile()).toPath());
     }
 
-    /** For creating the wrapper around a VFS FileObject (used internally for nesting) */
+    /** Internal wrapper for FileObject */
     private static IJar create(FileObject fileObject) {
         return new VFSJar(fileObject);
     }
@@ -46,6 +40,9 @@ public final class VFSJar implements IJar {
     // -------------------- Implementation --------------------
 
     private final FileObject root;
+    private final Map<String, FileObject> fileCache = new ConcurrentHashMap<>();
+    private final Map<String, IJar> nestedJarCache = new ConcurrentHashMap<>();
+    private final Map<String, List<String>> dirCache = new ConcurrentHashMap<>();
 
     private VFSJar(FileObject root) {
         this.root = root;
@@ -53,7 +50,6 @@ public final class VFSJar implements IJar {
 
     @Override
     public String getName() {
-        // Returns the filename (e.g., "example.jar")
         return root.getName().getBaseName();
     }
 
@@ -66,26 +62,35 @@ public final class VFSJar implements IJar {
         }
     }
 
+    /** Resolve a file path with caching */
+    private FileObject resolveCached(String path) throws FileSystemException {
+        return fileCache.computeIfAbsent(path, p -> {
+            try { return root.resolveFile(p); }
+            catch (FileSystemException e) { throw new RuntimeException(e); }
+        });
+    }
+
     @Override
     public IJar getNestedJar(String path) throws IOException {
-        FileObject nestedFile = root.resolveFile(path);
-        if (!nestedFile.exists()) return null;
-
-        // The "Secret Sauce": Take the nested file and wrap it in its own JAR layer
-        FileSystemManager manager = VFS.getManager();
-        String nestedUri = "jar:" + nestedFile.getName().getURI() + "!/";
-        return new VFSJar(manager.resolveFile(nestedUri));
+        return nestedJarCache.computeIfAbsent(path, p -> {
+            try {
+                FileObject nestedFile = resolveCached(p);
+                if (!nestedFile.exists()) return null;
+                String nestedUri = "jar:" + nestedFile.getName().getURI() + "!/";
+                return new VFSJar(VFS.getManager().resolveFile(nestedUri));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     @Override
     public List<IJar> getNestedJars() {
         try {
-            // Find all .jar files inside this jar
             return Arrays.stream(root.findFiles(new FileExtensionSelector("jar")))
-                    .filter(f -> !f.equals(root)) // Don't include yourself
+                    .filter(f -> !f.equals(root))
                     .map(f -> {
                         try {
-                            // Convert the relative path into a new VFSJar
                             return getNestedJar(root.getName().getRelativeName(f.getName()));
                         } catch (IOException e) {
                             throw new RuntimeException(e);
@@ -97,10 +102,24 @@ public final class VFSJar implements IJar {
         }
     }
 
+    /**
+     * Returns the URL of a single resource inside this JAR.
+     * Format: jar:<jar-url>!/<resource-path>
+     */
+    public URL findResource(String name) {
+        if (!exists(name)) return null;
+
+        try {
+            return resolveCached(name).getURL();
+        } catch (FileSystemException e) {
+            return null;
+        }
+    }
+
     @Override
     public boolean exists(String path) {
         try {
-            return root.resolveFile(path).exists();
+            return resolveCached(path).exists();
         } catch (FileSystemException e) {
             return false;
         }
@@ -109,7 +128,7 @@ public final class VFSJar implements IJar {
     @Override
     public InputStream getInputStream(String path) {
         try {
-            FileObject file = root.resolveFile(path);
+            FileObject file = resolveCached(path);
             return file.exists() ? file.getContent().getInputStream() : null;
         } catch (FileSystemException e) {
             return null;
@@ -127,20 +146,23 @@ public final class VFSJar implements IJar {
 
     @Override
     public List<String> listEntries(String directory) {
-        try {
-            FileObject dir = root.resolveFile(directory);
-            return Arrays.stream(dir.getChildren())
-                    .map(f -> {
-                        try {
-                            return root.getName().getRelativeName(f.getName());
-                        } catch (FileSystemException e) {
-                            throw new RuntimeException(e);
-                        }
-                    })
-                    .collect(Collectors.toList());
-        } catch (FileSystemException e) {
-            return List.of();
-        }
+        return dirCache.computeIfAbsent(directory, dir -> {
+            try {
+                FileObject dirFile = resolveCached(dir);
+                if (!dirFile.exists() || dirFile.getType() != FileType.FOLDER) return List.of();
+                return Arrays.stream(dirFile.getChildren())
+                        .map(f -> {
+                            try {
+                                return root.getName().getRelativeName(f.getName());
+                            } catch (FileSystemException e) {
+                                throw new RuntimeException(e);
+                            }
+                        })
+                        .collect(Collectors.toList());
+            } catch (FileSystemException e) {
+                return List.of();
+            }
+        });
     }
 
     @Override
@@ -151,7 +173,7 @@ public final class VFSJar implements IJar {
     @Override
     public boolean isDirectory(String path) {
         try {
-            return root.resolveFile(path).getType() == FileType.FOLDER;
+            return resolveCached(path).getType() == FileType.FOLDER;
         } catch (FileSystemException e) {
             return false;
         }

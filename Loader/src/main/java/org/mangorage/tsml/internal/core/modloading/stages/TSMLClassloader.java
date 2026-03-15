@@ -2,13 +2,15 @@ package org.mangorage.tsml.internal.core.modloading.stages;
 
 import org.mangorage.jar.IJar;
 import org.mangorage.jar.JarClassloader;
+import org.mangorage.jar.SpeedyJarClassLoader;
 import org.mangorage.tsml.api.classloader.IClassTransformer;
 import org.mangorage.tsml.api.classloader.ITSMLClassloader;
 
+import java.net.URL;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public final class TSMLClassloader extends JarClassloader implements ITSMLClassloader {
+public final class TSMLClassloader extends SpeedyJarClassLoader implements ITSMLClassloader {
 
     static {
         ClassLoader.registerAsParallelCapable();
@@ -70,5 +72,13 @@ public final class TSMLClassloader extends JarClassloader implements ITSMLClassl
         }
 
         return finishedClassbytes;
+    }
+
+    @Override
+    public URL[] getUrls() {
+        List<URL> urlsList = new ArrayList<>(List.of(super.getUrls()));
+        if (getParent() instanceof SpeedyJarClassLoader speedyJarClassLoader)
+            urlsList.addAll(List.of(speedyJarClassLoader.getUrls()));
+        return urlsList.toArray(URL[]::new);
     }
 }

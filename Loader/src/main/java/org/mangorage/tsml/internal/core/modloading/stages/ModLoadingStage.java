@@ -147,8 +147,7 @@ public final class ModLoadingStage {
                 )
         );
 
-        final List<URL> urls = new ArrayList<>(Arrays.stream(((URLClassLoader) Thread.currentThread().getContextClassLoader()).getURLs()).toList());
-        urls.addAll(Arrays.stream(((URLClassLoader) Thread.currentThread().getContextClassLoader().getParent()).getURLs()).toList());
+        final List<URL> urls = new ArrayList<>(Arrays.stream(((ITSMLClassloader) Thread.currentThread().getContextClassLoader()).getUrls()).toList());
 
         for (URL url : urls) {
             try {
