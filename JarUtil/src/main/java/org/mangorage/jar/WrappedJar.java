@@ -31,7 +31,7 @@ public final class WrappedJar implements IJar {
 
     private final JarFile jarFile;
 
-    public WrappedJar(JarFile jarFile) {
+    WrappedJar(JarFile jarFile) {
         this.jarFile = jarFile;
     }
 
@@ -63,7 +63,7 @@ public final class WrappedJar implements IJar {
 
             try (InputStream in = jarFile.getInputStream(entry)) {
                 byte[] bytes = in.readAllBytes();
-                return new JarInJar(bytes, entry.getName(), jarFile.getName());
+                return VirtualJar.create(bytes, entry.getName(), jarFile.getName());
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -129,7 +129,7 @@ public final class WrappedJar implements IJar {
                 .map(e -> {
                     try (InputStream in = jarFile.getInputStream(e)) {
                         byte[] bytes = in.readAllBytes();
-                        return (IJar) new JarInJar(bytes, e.getName(), jarFile.getName());
+                        return VirtualJar.create(bytes, e.getName(), jarFile.getName());
                     } catch (IOException ex) {
                         throw new RuntimeException(ex);
                     }

@@ -6,6 +6,7 @@ import org.mangorage.jar.WrappedJar;
 import org.mangorage.tsml.bootstrap.internal.TSMLDefaultLogger;
 import java.net.URL;
 import java.util.List;
+import java.util.zip.ZipFile;
 
 public final class Bootstrap {
     private static final String LAUNCH_CLASS = "org.mangorage.tsml.internal.core.modloading.stages.ModLoadingManager";
@@ -18,6 +19,7 @@ public final class Bootstrap {
             URL bootstrapJarURL = Bootstrap.class.getProtectionDomain().getCodeSource().getLocation();
             IJar bootstrapJar = WrappedJar.create(bootstrapJarURL.getFile());
 
+            ZipFile a;
 
 
             TSMLDefaultLogger.getInstance().info("Starting TSML Bootstrap...");

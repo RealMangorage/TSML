@@ -46,8 +46,6 @@ public class JarClassloader extends SecureClassLoader {
 
     @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException {
-        final var time = System.currentTimeMillis();
-
         Class<?> loadedClass = findLoadedClass(name);
         if (loadedClass != null) return loadedClass;
 
@@ -58,7 +56,7 @@ public class JarClassloader extends SecureClassLoader {
         }
 
         try {
-            final var definedClass = defineClass(name, classBytes, 0, classBytes.length);
+            final var definedClass = defineClass(name, classBytes, 0, classBytes.length, getClassProtectionDomain(name));
             loaded.add(name);
             return definedClass;
         } catch (Exception e) {

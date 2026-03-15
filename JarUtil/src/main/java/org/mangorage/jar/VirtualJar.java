@@ -11,11 +11,20 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
 
-public final class JarInJar implements IJar {
+public final class VirtualJar implements IJar {
 
-    private final byte[] jarBytes;
+    public static IJar create(byte[] jarBytes, String name, String originPath) throws IOException {
+        return new VirtualJar(jarBytes, name, originPath);
+    }
+
+    private final JarInputStream jarInputStream;
+    private final int length;
+
     private final String name;
     private final String originPath;
+    private final String fullPath;
+
+    private final URL URL;
 
     private final Map<String, byte[]> entries = new HashMap<>();
     private final Set<String> directories = new HashSet<>();
@@ -23,16 +32,41 @@ public final class JarInJar implements IJar {
 
     private Manifest manifest;
 
-    public JarInJar(byte[] jarBytes, String name, String originPath) {
-        this.jarBytes = jarBytes;
+    VirtualJar(byte[] jarBytes, String name, String originPath) throws IOException {
+        this.jarInputStream = new JarInputStream(new ByteArrayInputStream(jarBytes));
+        this.length = jarBytes.length;
         this.name = name;
         this.originPath = originPath;
+        this.fullPath = originPath + "!/" + name;
+
+        this.URL = new URL("file", null, -1, fullPath, new URLStreamHandler() {
+            @Override
+            protected URLConnection openConnection(URL u) {
+                return new URLConnection(u) {
+
+                    @Override
+                    public void connect() {
+
+                    }
+
+                    @Override
+                    public InputStream getInputStream() {
+                        return jarInputStream;
+                    }
+
+                    @Override
+                    public int getContentLength() {
+                        return length;
+                    }
+                };
+            }
+        });
 
         indexJar();
     }
 
     private void indexJar() {
-        try (JarInputStream jis = new JarInputStream(new ByteArrayInputStream(jarBytes))) {
+        try (JarInputStream jis = jarInputStream) {
 
             manifest = jis.getManifest();
 
@@ -60,7 +94,7 @@ public final class JarInJar implements IJar {
 
                 // Nested jar detection
                 if (entryName.endsWith(".jar")) {
-                    nestedJars.add(new JarInJar(data, entryName, originPath + "!/" + name));
+                    nestedJars.add(create(data, entryName, originPath + "!/" + name));
                 }
             }
 
@@ -78,30 +112,7 @@ public final class JarInJar implements IJar {
 
     @Override
     public URL getURL() {
-        try {
-            return new URL("file", null, -1, originPath + "!/" + name, new URLStreamHandler() {
-                @Override
-                protected URLConnection openConnection(URL u) {
-                    return new URLConnection(u) {
-
-                        @Override
-                        public void connect() {}
-
-                        @Override
-                        public InputStream getInputStream() {
-                            return new ByteArrayInputStream(jarBytes);
-                        }
-
-                        @Override
-                        public int getContentLength() {
-                            return jarBytes.length;
-                        }
-                    };
-                }
-            });
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        return URL;
     }
 
     // ---------------- Nested Jar Support ----------------
