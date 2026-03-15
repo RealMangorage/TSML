@@ -15,6 +15,8 @@ public final class TriviaSpireMod {
 
             final String[] args = mod.getProperty("args", String[].class).orElse(new String[0]);
             init(mainClass, args);
+            TSMLLogger.getInternal().info("Shutting everything down!");
+            TSMLThreads.shutdown();
         });
     }
 

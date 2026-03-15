@@ -29,7 +29,7 @@ public final class TSMLThreads {
     public static void shutdown() {
         EXECUTOR.shutdown();
         try {
-            if (!EXECUTOR.awaitTermination(60, TimeUnit.SECONDS)) {
+            if (!EXECUTOR.awaitTermination(5, TimeUnit.SECONDS)) {
                 EXECUTOR.shutdownNow();
             }
         } catch (InterruptedException e) {
