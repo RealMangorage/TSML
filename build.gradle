@@ -29,12 +29,11 @@ jarJar.register() {
     dependsOn ":JarUtil:classes"
 
     from({
-        zipTree(project(":JarUtil").tasks.named("jar").get().archiveFile)
+        configurations.getByName("run").files.collect { zipTree(it) }
     }) {
-        // Optional: Put them in a specific folder, or leave empty for the root
-        into ''
-
-        // Optional: Exclude the manifest from the sub-project to avoid conflicts
+        // Flatten or keep paths as needed
+        into ''  // empty = root
+        // Avoid manifest collisions
         exclude 'META-INF/MANIFEST.MF'
     }
 
@@ -51,10 +50,10 @@ jarJar.register() {
 }
 
 dependencies {
-
-    compileOnly 'org.apache.commons:commons-vfs2:2.10.0'
+    run project(":JarUtil")
     run 'org.apache.commons:commons-vfs2:2.10.0'
 
+    compileOnly 'org.apache.commons:commons-vfs2:2.10.0'
     compileOnly(project(":JarUtil"))
 
     jarJarLoader(project(":Loader"))
@@ -77,7 +76,6 @@ tasks.register('runGame', JavaExec) {
     description = 'Runs the TSML game'
 
     def combinedClasspath = files(
-            configurations.getByName("run"),
             tasks.getByName("jarJar")
     )
 
