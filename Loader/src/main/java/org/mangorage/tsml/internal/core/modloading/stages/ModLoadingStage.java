@@ -3,6 +3,12 @@ package org.mangorage.tsml.internal.core.modloading.stages;
 import com.google.gson.Gson;
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ScanResult;
+import org.apache.commons.vfs2.FileObject;
+import org.apache.commons.vfs2.FileSelectInfo;
+import org.apache.commons.vfs2.FileSelector;
+import org.apache.commons.vfs2.FileSystemManager;
+import org.apache.commons.vfs2.FileType;
+import org.apache.commons.vfs2.VFS;
 import org.mangorage.jar.IJar;
 import org.mangorage.jar.JarClassloader;
 import org.mangorage.tsml.api.TSMLLogger;
@@ -13,19 +19,27 @@ import org.mangorage.tsml.api.mod.Mod;
 import org.mangorage.tsml.internal.core.modloading.ModInfo;
 import org.mangorage.tsml.internal.mod.BuiltInMod;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
 public final class ModLoadingStage {
@@ -72,19 +86,49 @@ public final class ModLoadingStage {
         );
     }
 
-    public static List<String> getClasspathAsStrings(ClassLoader cl) {
-        if (cl instanceof JarClassloader iJarCl) {
-            // Map the IJar list to string representations (e.g., jar paths or names)
-            return iJarCl.getJars().stream()
-                    .map(IJar::getURL) // assuming IJar has a getName() method
-                    .map(URL::toString)
-                    .collect(Collectors.toList());
-        } else {
-            // Fallback: maybe just return empty list or throw
-            throw new IllegalStateException("Current ClassLoader is not a JarClassloader");
-        }
-    }
 
+
+    public static void scanURL(FileSystemManager fs, String url) throws Exception {
+        FileObject root = fs.resolveFile(url);
+
+        root.findFiles(new FileSelector() {
+            @Override
+            public boolean includeFile(FileSelectInfo info) throws Exception {
+                FileObject file = info.getFile();
+
+                if (file.getType() == FileType.FILE &&
+                        file.getName().getBaseName().endsWith(".mods.json")) {
+
+                    try (InputStream in = file.getContent().getInputStream()) {
+                        ModInfo modInfo = new Gson().fromJson(new String(in.readAllBytes()), ModInfo.class);
+                        if (modInfo == null) {
+                            TSMLLogger.getInternal().error("Failed to load mod metadata");
+                        } else {
+                            try {
+                                System.out.println(modInfo.entrypoint());
+                                Class<?> modClass = Class.forName(modInfo.entrypoint(), false, Thread.currentThread().getContextClassLoader());
+                                IModContainer container = new ModContainerImpl(modInfo, modClass);
+                                modContainerMap.put(modInfo.id(), container);
+                                TSMLLogger.getInternal().info("Loaded mod: " + modInfo.name());
+                            } catch (Throwable e) {
+                                TSMLLogger.getInternal().warn("Failed to load mod class");
+                                TSMLLogger.getInternal().error(e);
+                            }
+                        }
+                    }
+
+                    return true;
+                }
+
+                return false;
+            }
+
+            @Override
+            public boolean traverseDescendents(FileSelectInfo info) {
+                return true;
+            }
+        });
+    }
     public static void scanMods(String mainClass, String[] args) {
         TSMLLogger.getInternal().info("Scanning for mods...");
 
@@ -103,39 +147,15 @@ public final class ModLoadingStage {
                 )
         );
 
-        final List<String> classpath = new ArrayList<>(getClasspathAsStrings(Thread.currentThread().getContextClassLoader()));
-        classpath.addAll(getClasspathAsStrings(Thread.currentThread().getContextClassLoader().getParent()));
+        final List<URL> urls = new ArrayList<>(Arrays.stream(((URLClassLoader) Thread.currentThread().getContextClassLoader()).getURLs()).toList());
+        urls.addAll(Arrays.stream(((URLClassLoader) Thread.currentThread().getContextClassLoader().getParent()).getURLs()).toList());
 
-        try (ScanResult scanResult = new ClassGraph()
-                .enableAnnotationInfo()         // Required to find @Annotation
-                .enableClassInfo()
-                .enableRemoteJarScanning()
-                .addClassLoader(Thread.currentThread().getContextClassLoader())
-                .overrideClasspath(classpath)
-                .scan()
-        ) {
-
-            // Find classes that have the @Mod annotation
-            scanResult
-                    .getClassesWithAnnotation(Mod.class)
-                    .forEach(classInfo -> {
-                        TSMLLogger.getInternal().info("Discovered: " + classInfo.getName());
-                        final var id = classInfo.getAnnotationInfo(Mod.class.getName()).getParameterValues().getValue("id").toString();
-                        ModInfo modInfo = getModInfo(id);
-                        if (modInfo == null) {
-                            TSMLLogger.getInternal().error("Failed to load mod metadata for " + id);
-                        } else {
-                            try {
-                                Class<?> modClass = classInfo.loadClass();
-                                IModContainer container = new ModContainerImpl(modInfo, modClass);
-                                modContainerMap.put(id, container);
-                                TSMLLogger.getInternal().info("Loaded mod: " + modInfo.name());
-                            } catch (Throwable e) {
-                                TSMLLogger.getInternal().warn("Failed to load mod class for " + id);
-                                TSMLLogger.getInternal().error(e);
-                            }
-                        }
-                    });
+        for (URL url : urls) {
+            try {
+                scanURL(VFS.getManager(), url.toExternalForm());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 

@@ -4,139 +4,84 @@ import com.google.gson.Gson;
 import org.mangorage.jar.IJar;
 import org.mangorage.tsml.internal.core.jarjar.JarJarMetadata;
 import org.mangorage.tsml.internal.core.jarjar.JarMetadata;
-import org.mangorage.tsml.internal.core.jarjar.VersionMetadata;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.*;
 
 public final class JarJarResolver {
-
     private static final Gson gson = new Gson();
 
     public static List<IJar> resolveAll(List<IJar> baseJars) {
-        List<IJar> resolved = new ArrayList<>();
-        Set<String> visited = new HashSet<>();
-        Map<String, ArtifactEntry> artifacts = new HashMap<>();
+        // Maps "group:artifact" to the best version found so far
+        Map<String, ArtifactEntry> artifacts = new LinkedHashMap<>();
 
-        for (IJar jar : baseJars) {
-            resolveJar(jar, resolved, visited, artifacts);
-        }
+        // The queue for discovery
+        Deque<IJar> discoveryQueue = new ArrayDeque<>(baseJars);
 
-        return resolved;
-    }
+        while (!discoveryQueue.isEmpty()) {
+            IJar current = discoveryQueue.poll();
+            JarJarMetadata metadata = readMetadata(current);
 
-    private static void resolveJar(
-            IJar jar,
-            List<IJar> resolved,
-            Set<String> visited,
-            Map<String, ArtifactEntry> artifacts
-    ) {
-        if (!visited.add(jar.getName())) {
-            return;
-        }
+            if (metadata == null || metadata.jars() == null) continue;
 
-        resolved.add(jar);
+            for (JarMetadata meta : metadata.jars()) {
+                String id = meta.identifier().group() + ":" + meta.identifier().artifact();
+                String version = meta.version().artifactVersion();
 
-        JarJarMetadata metadata = readMetadata(jar);
-        if (metadata == null) {
-            return;
-        }
+                ArtifactEntry existing = artifacts.get(id);
 
-        for (JarMetadata meta : metadata.jars()) {
-            try {
-                String key = meta.identifier().group() + ":" + meta.identifier().artifact();
-
-                IJar nested = jar.getNestedJar(meta.path());
-                if (nested == null) {
-                    continue;
-                }
-
-                if (!versionMatches(meta.version())) {
-                    throw new RuntimeException(
-                            "Jar version mismatch for "
-                                    + key
-                                    + " expected " + meta.version().range()
-                                    + " got " + meta.version().artifactVersion()
-                    );
-                }
-
-                ArtifactEntry existing = artifacts.get(key);
-
-                if (existing == null) {
-                    artifacts.put(key, new ArtifactEntry(meta.version().artifactVersion(), nested));
-                    resolveJar(nested, resolved, visited, artifacts);
-                } else {
-                    String newVersion = meta.version().artifactVersion();
-
-                    if (compare(newVersion, existing.version) > 0) {
-                        artifacts.put(key, new ArtifactEntry(newVersion, nested));
+                // If we haven't seen this, or this version is better than the one we have
+                if (existing == null || compare(version, existing.version) > 0) {
+                    try {
+                        IJar nested = current.getNestedJar(meta.path());
+                        if (nested != null) {
+                            artifacts.put(id, new ArtifactEntry(version, nested));
+                            // RECURSION: Add the nested jar to the queue to find ITS nested jars
+                            discoveryQueue.add(nested);
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Failed to extract nested jar " + meta.path() + " from " + current.getName());
                     }
                 }
-
-            } catch (Exception e) {
-                throw new RuntimeException("Failed resolving nested jar " + meta.path(), e);
             }
         }
+
+        // Final result: The original mods + the unique winners from JarJar
+        List<IJar> result = new ArrayList<>(baseJars);
+        for (ArtifactEntry entry : artifacts.values()) {
+            result.add(entry.jar);
+        }
+
+        return result;
     }
 
     private static JarJarMetadata readMetadata(IJar jar) {
         try (InputStream in = jar.getInputStream("META-INF/jarjar/metadata.json")) {
-            if (in == null) {
-                return null;
-            }
+            if (in == null) return null;
             return gson.fromJson(new InputStreamReader(in), JarJarMetadata.class);
         } catch (Exception e) {
-            throw new RuntimeException("Failed reading jarjar metadata from " + jar.getName(), e);
+            return null;
         }
     }
 
-    private static boolean versionMatches(VersionMetadata expected) {
-        String range = expected.range();
-        if (range == null || range.isEmpty()) {
-            return true;
+    public static int compare(String a, String b) {
+        if (a.equals(b)) return 0;
+        String[] as = a.split("[.-]");
+        String[] bs = b.split("[.-]");
+
+        int length = Math.max(as.length, bs.length);
+        for (int i = 0; i < length; i++) {
+            int av = i < as.length ? parseSegment(as[i]) : 0;
+            int bv = i < bs.length ? parseSegment(bs[i]) : 0;
+            if (av != bv) return Integer.compare(av, bv);
         }
-
-        String version = expected.artifactVersion();
-
-        if (range.startsWith("[")) {
-            String min = range.substring(1, range.indexOf(','));
-            return compare(version, min) >= 0;
-        }
-
-        return true;
-    }
-
-    private static int compare(String a, String b) {
-        String[] as = a.split("\\.");
-        String[] bs = b.split("\\.");
-
-        int len = Math.max(as.length, bs.length);
-
-        for (int i = 0; i < len; i++) {
-            int ai = i < as.length ? parseSegment(as[i]) : 0;
-            int bi = i < bs.length ? parseSegment(bs[i]) : 0;
-
-            if (ai != bi) {
-                return Integer.compare(ai, bi);
-            }
-        }
-
         return 0;
     }
 
     private static int parseSegment(String s) {
-        int end = 0;
-
-        while (end < s.length() && Character.isDigit(s.charAt(end))) {
-            end++;
-        }
-
-        if (end == 0) {
-            return 0;
-        }
-
-        return Integer.parseInt(s.substring(0, end));
+        String digits = s.replaceAll("\\D", "");
+        return digits.isEmpty() ? 0 : Integer.parseInt(digits);
     }
 
     private static class ArtifactEntry {

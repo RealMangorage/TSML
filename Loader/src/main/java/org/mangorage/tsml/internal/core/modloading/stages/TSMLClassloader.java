@@ -22,39 +22,21 @@ public final class TSMLClassloader extends JarClassloader implements ITSMLClassl
 
     void init() {
         // Auto-load transformers
-        TSMLThreads.run(() -> {
-            ServiceLoader.load(IClassTransformer.class, this)
-                    .stream()
-                    .forEach(provider -> {
-                        TSMLThreads.run(() -> {
-                            try {
-                                transformers.add(provider.get());
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        });
-                    });
-        });
-    }
 
+        ServiceLoader.load(IClassTransformer.class, this)
+                .stream()
+                .forEach(provider -> {
+                    transformers.add(provider.get());
+                });
+
+    }
 
     // ------------------- ITSMLClassloader -------------------
-
-    @Override
-    public byte[] getClassBytes(String name) {
-        String path = name.replace('.', '/') + ".class";
-        return getResourceBytes(path);
-    }
 
     @Override
     public boolean hasClass(final String name) {
         if (!getLoaded().contains("Launcher")) return false;
         return findLoadedClass(name.replace('/', '.')) != null;
-    }
-
-    @Override
-    public List<IJar> getJars() {
-        return super.getJars();
     }
 
 

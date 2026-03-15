@@ -10,7 +10,7 @@ public record ModInfo(
         String name,
         String version,
         String description,
-        String mainClass,
+        String entrypoint,
         List<Dependency> dependencies,
         List<String> authors,
         Map<String, Object> properties

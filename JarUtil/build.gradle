@@ -10,5 +10,5 @@ repositories {
 }
 
 dependencies {
-
+    compileOnly 'org.apache.commons:commons-vfs2:2.10.0'
 }

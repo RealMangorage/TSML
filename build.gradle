@@ -16,6 +16,10 @@ configurations {
         canBeResolved = true
         canBeConsumed = false
     }
+    run {
+        canBeResolved = true
+        canBeConsumed = true
+    }
 }
 
 jarJar.register() {
@@ -47,6 +51,10 @@ jarJar.register() {
 }
 
 dependencies {
+
+    compileOnly 'org.apache.commons:commons-vfs2:2.10.0'
+    run 'org.apache.commons:commons-vfs2:2.10.0'
+
     compileOnly(project(":JarUtil"))
 
     jarJarLoader(project(":Loader"))
@@ -68,7 +76,12 @@ tasks.register('runGame', JavaExec) {
     group = 'application'
     description = 'Runs the TSML game'
 
-    classpath = tasks.getByName("jarJar").outputs.files
+    def combinedClasspath = files(
+            configurations.getByName("run"),
+            tasks.getByName("jarJar")
+    )
+
+    classpath = combinedClasspath
     mainClass = application.mainClass
 
     workingDir = file("$buildDir/run")

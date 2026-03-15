@@ -1,25 +1,50 @@
 package org.mangorage.tsml.bootstrap;
 
+import org.apache.commons.vfs2.FileObject;
+import org.apache.commons.vfs2.FileSystemManager;
+import org.apache.commons.vfs2.VFS;
 import org.mangorage.jar.IJar;
 import org.mangorage.jar.JarClassloader;
-import org.mangorage.jar.WrappedJar;
+import org.mangorage.jar.VFSJar;
 import org.mangorage.tsml.bootstrap.internal.TSMLDefaultLogger;
 import java.net.URL;
 import java.util.List;
-import java.util.zip.ZipFile;
 
 public final class Bootstrap {
     private static final String LAUNCH_CLASS = "org.mangorage.tsml.internal.core.modloading.stages.ModLoadingManager";
 
+    public static void test() {
+        try {
+            FileSystemManager manager = VFS.getManager();
+
+            // Note the triple protocol layering for a nested JAR
+            // jar: (the inner jar contents)
+            // jar: (the outer jar contents)
+            // file: (the actual physical file on the F: drive)
+            String nestedUri = "jar:jar:file:///F:/HytaleProjects/TSML/build/libs/TSML-0.0.28-all.jar!/example.jar!/";
+
+            try (FileObject exampleJarRoot = manager.resolveFile(nestedUri)) {
+                System.out.println("Successfully resolved: " + exampleJarRoot.getName().getFriendlyURI());
+
+                // Listing the files inside example.jar
+                for (FileObject child : exampleJarRoot.getChildren()) {
+                    System.out.println("Internal Entry: " + child.getName().getBaseName());
+                }
+            }
+        } catch (Exception e) {
+            // VFS is sensitive to URI formatting (slashes and !)
+            e.printStackTrace();
+        }
+    }
+
 
     public static void main(String[] args) {
+        test();
         try {
             final var time = System.currentTimeMillis();
 
             URL bootstrapJarURL = Bootstrap.class.getProtectionDomain().getCodeSource().getLocation();
-            IJar bootstrapJar = WrappedJar.create(bootstrapJarURL.toURI());
-
-            ZipFile a;
+            IJar bootstrapJar = VFSJar.create(bootstrapJarURL);
 
 
             TSMLDefaultLogger.getInstance().info("Starting TSML Bootstrap...");
@@ -28,8 +53,10 @@ public final class Bootstrap {
             TSMLDefaultLogger.getInstance().info("Looking for JarJarLoader nested jar...");
             final List<IJar> loaderJars = bootstrapJar.getNestedJars()
                     .stream()
-                    .filter(jar -> jar.getName().startsWith("JarJarLoader/") && jar.getName().endsWith(".jar"))
+                    .filter(jar -> jar.getURL().getFile().contains("JarJarLoader"))
                     .toList();
+
+            System.out.println(loaderJars.isEmpty());
 
             if (loaderJars.isEmpty()) {
                 TSMLDefaultLogger.getInstance().info("Could not find JarJarLoader nested jars in TSML bootstrap jar");

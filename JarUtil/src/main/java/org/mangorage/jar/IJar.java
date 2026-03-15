@@ -18,6 +18,10 @@ public interface IJar {
 
     List<IJar> getNestedJars();
 
+    default String getURI() {
+        return null;
+    }
+
     /* =========================
        File access API
        ========================= */

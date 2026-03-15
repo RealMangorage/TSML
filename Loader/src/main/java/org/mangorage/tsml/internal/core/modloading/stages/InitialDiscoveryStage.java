@@ -1,9 +1,11 @@
 package org.mangorage.tsml.internal.core.modloading.stages;
 
+import org.apache.commons.vfs2.VFS;
 import org.mangorage.jar.IJar;
-import org.mangorage.jar.WrappedJar;
+import org.mangorage.jar.VFSJar;
 import org.mangorage.tsml.internal.core.modloading.JarJarResolver;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.DirectoryStream;
@@ -56,11 +58,12 @@ public final class InitialDiscoveryStage {
                 .map(Path::toFile)
                 .filter(file -> file.getName().endsWith(".jar"))
                 .filter(file -> file.getName().contains("TriviaSpire"))
-                .map(WrappedJar::create)
+                .map(File::toPath)
+                .map(VFSJar::create)
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("Could not find TriviaSpire.jar in root folder"));
 
-        IJar tsmlJar = WrappedJar.create(baseResource);
+        IJar tsmlJar = VFSJar.create(baseResource);
 
         foundJars.add(tsmlJar);
 
@@ -68,7 +71,7 @@ public final class InitialDiscoveryStage {
             try (Stream<Path> stream = Files.list(modsPath)) {
                 stream
                         .filter(Files::isRegularFile)
-                        .map(path -> WrappedJar.create(path.toFile()))
+                        .map(VFSJar::create)
                         .forEach(foundJars::add);
             }
         }
