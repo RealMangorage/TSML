@@ -60,7 +60,7 @@ public final class InitialDiscoveryStage {
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("Could not find TriviaSpire.jar in root folder"));
 
-        IJar tsmlJar = WrappedJar.create(baseResource.getFile());
+        IJar tsmlJar = WrappedJar.create(baseResource);
 
         foundJars.add(tsmlJar);
 

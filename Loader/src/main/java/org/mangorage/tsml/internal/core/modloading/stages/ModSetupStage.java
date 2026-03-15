@@ -19,14 +19,10 @@ public final class ModSetupStage {
     record StageResult(TSMLClassloader classloader, String foundClass) {}
 
     static String getMainClass(IJar jar) throws IOException {
-        if (!jar.exists("META-INF/MANIFEST.MF")) {
-            return null;
-        }
-
-        try (InputStream in = jar.getInputStream("META-INF/MANIFEST.MF")) {
-            Manifest manifest = new Manifest(in);
-            return manifest.getMainAttributes().getValue("Main-Class");
-        }
+        final var manifest = jar.getManifest();
+        if (manifest == null)
+            throw new IllegalStateException("Unable to find manifest for TriviaSpire");
+        return manifest.getMainAttributes().getValue("Main-Class");
     }
 
     enum TSMLType {

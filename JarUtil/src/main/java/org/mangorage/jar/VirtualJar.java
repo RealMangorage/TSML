@@ -37,7 +37,7 @@ public final class VirtualJar implements IJar {
         this.length = jarBytes.length;
         this.name = name;
         this.originPath = originPath;
-        this.fullPath = originPath + "!/" + name;
+        this.fullPath = originPath != null ? originPath + "!/" + name : name;
 
         this.URL = new URL("file", null, -1, fullPath, new URLStreamHandler() {
             @Override
@@ -94,7 +94,7 @@ public final class VirtualJar implements IJar {
 
                 // Nested jar detection
                 if (entryName.endsWith(".jar")) {
-                    nestedJars.add(create(data, entryName, originPath + "!/" + name));
+                    nestedJars.add(create(data, entryName, fullPath));
                 }
             }
 

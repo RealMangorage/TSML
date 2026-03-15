@@ -17,7 +17,7 @@ public final class Bootstrap {
             final var time = System.currentTimeMillis();
 
             URL bootstrapJarURL = Bootstrap.class.getProtectionDomain().getCodeSource().getLocation();
-            IJar bootstrapJar = WrappedJar.create(bootstrapJarURL.getFile());
+            IJar bootstrapJar = WrappedJar.create(bootstrapJarURL.toURI());
 
             ZipFile a;
 

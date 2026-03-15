@@ -3,7 +3,10 @@ package org.mangorage.jar;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.jar.JarEntry;
@@ -15,18 +18,31 @@ public final class WrappedJar implements IJar {
 
     // -------------------- Factory --------------------
     public static IJar create(Path path) {
-        try { return new WrappedJar(new JarFile(path.toFile())); }
-        catch (IOException e) { throw new RuntimeException(e); }
+        try {
+            return new WrappedJar(
+                    new JarFile(
+                            path.toFile(), true
+                    )
+            );
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static IJar create(File file) {
-        try { return new WrappedJar(new JarFile(file)); }
-        catch (IOException e) { throw new RuntimeException(e); }
+        return create(file.toPath());
     }
 
-    public static IJar create(String path) {
-        try { return new WrappedJar(new JarFile(path)); }
-        catch (IOException e) { throw new RuntimeException(e); }
+    public static IJar create(URI uri) {
+        return create(Path.of(uri));
+    }
+
+    public static IJar create(URL url) {
+        try {
+            return create(url.toURI());
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private final JarFile jarFile;
