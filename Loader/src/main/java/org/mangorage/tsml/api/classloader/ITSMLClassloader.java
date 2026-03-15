@@ -1,6 +1,6 @@
 package org.mangorage.tsml.api.classloader;
 
-import org.mangorage.tsml.api.jar.IJar;
+import org.mangorage.jar.IJar;
 
 import java.util.List;
 

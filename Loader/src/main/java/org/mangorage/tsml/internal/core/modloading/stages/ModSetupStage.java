@@ -1,10 +1,11 @@
 package org.mangorage.tsml.internal.core.modloading.stages;
 
+import org.mangorage.jar.IJar;
+import org.mangorage.jar.JarClassloader;
 import org.mangorage.tsml.api.TSMLLogger;
 import org.mangorage.tsml.api.logger.ILoaderLogger;
 import org.mangorage.tsml.api.mod.Environment;
 import org.mangorage.tsml.api.mod.IEarlyMod;
-import org.mangorage.tsml.api.jar.IJar;
 
 import java.io.IOException;
 import java.io.InputStream;

@@ -7,23 +7,32 @@ plugins {
 group = 'org.mangorage'
 version = "$TSML_VERSION"
 
-repositories { mavenCentral() }
+repositories {
+    mavenCentral()
+}
 
 configurations {
     jarJarLoader {
         canBeResolved = true
         canBeConsumed = false
     }
-    jarJarMod {
-        canBeResolved = true
-        canBeConsumed = false
-    }
-
 }
 
 jarJar.register() {
     def outputTxt = new File(temporaryDir, "output.txt")
     outputTxt.text = configurations.jarJarLoader.files.collect { it.name }.join(System.lineSeparator())
+
+    dependsOn ":JarUtil:classes"
+
+    from({
+        zipTree(project(":JarUtil").tasks.named("jar").get().archiveFile)
+    }) {
+        // Optional: Put them in a specific folder, or leave empty for the root
+        into ''
+
+        // Optional: Exclude the manifest from the sub-project to avoid conflicts
+        exclude 'META-INF/MANIFEST.MF'
+    }
 
     from({ configurations.jarJarLoader.files }) {
         into 'JarJarLoader'
@@ -33,9 +42,13 @@ jarJar.register() {
     from(outputTxt) {
         into 'JarJarLoader'
     }
+
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
 
 dependencies {
+    compileOnly(project(":JarUtil"))
+
     jarJarLoader(project(":Loader"))
     jarJarLoader('io.github.classgraph:classgraph:4.8.179')
     jarJarLoader('com.google.code.gson:gson:2.10.1')
@@ -44,6 +57,7 @@ dependencies {
     jarJar(project(":BuiltInMods:TSMLCore"))
     jarJar(project(":BuiltInMods:ExampleMod"))
 }
+
 
 application {
     mainClass = 'org.mangorage.tsml.bootstrap.Bootstrap'

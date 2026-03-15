@@ -3,12 +3,13 @@ package org.mangorage.tsml.internal.core.modloading.stages;
 import com.google.gson.Gson;
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ScanResult;
+import org.mangorage.jar.IJar;
+import org.mangorage.jar.JarClassloader;
 import org.mangorage.tsml.api.TSMLLogger;
 import org.mangorage.tsml.api.classloader.ITSMLClassloader;
 import org.mangorage.tsml.api.dependency.Dependency;
 import org.mangorage.tsml.api.mod.IModContainer;
 import org.mangorage.tsml.api.mod.Mod;
-import org.mangorage.tsml.api.jar.IJar;
 import org.mangorage.tsml.internal.core.modloading.ModInfo;
 import org.mangorage.tsml.internal.mod.BuiltInMod;
 
@@ -72,19 +73,15 @@ public final class ModLoadingStage {
     }
 
     public static List<String> getClasspathAsStrings(ClassLoader cl) {
-        if (cl instanceof ITSMLClassloader iJarCl) {
+        if (cl instanceof JarClassloader iJarCl) {
             // Map the IJar list to string representations (e.g., jar paths or names)
             return iJarCl.getJars().stream()
                     .map(IJar::getURL) // assuming IJar has a getName() method
                     .map(URL::toString)
                     .collect(Collectors.toList());
-        } else if (cl instanceof URLClassLoader urlCl) {
-            return Arrays.stream(urlCl.getURLs())
-                    .map(URL::toString)
-                    .collect(Collectors.toList());
         } else {
             // Fallback: maybe just return empty list or throw
-            throw new IllegalStateException("Current ClassLoader is neither URLClassLoader nor TSMLClassloader");
+            throw new IllegalStateException("Current ClassLoader is not a JarClassloader");
         }
     }
 

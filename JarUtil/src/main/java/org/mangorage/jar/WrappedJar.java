@@ -1,6 +1,4 @@
-package org.mangorage.tsml.internal.core.jarjar;
-
-import org.mangorage.tsml.api.jar.IJar;
+package org.mangorage.jar;
 
 import java.io.File;
 import java.io.IOException;
@@ -122,4 +120,22 @@ public final class WrappedJar implements IJar {
     public Manifest getManifest() throws IOException {
         return jarFile.getManifest();
     }
+
+    @Override
+    public List<IJar> getNestedJars() {
+        return jarFile.stream()
+                .filter(e -> !e.isDirectory())
+                .filter(e -> e.getName().endsWith(".jar"))
+                .map(e -> {
+                    try (InputStream in = jarFile.getInputStream(e)) {
+                        byte[] bytes = in.readAllBytes();
+                        return (IJar) new JarInJar(bytes, e.getName(), jarFile.getName());
+                    } catch (IOException ex) {
+                        throw new RuntimeException(ex);
+                    }
+                })
+                .collect(Collectors.toList());
+    }
+
+
 }

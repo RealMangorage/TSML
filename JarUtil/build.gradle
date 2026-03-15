@@ -1,0 +1,14 @@
+plugins {
+    id 'java'
+}
+
+group = 'org.mangorage'
+version = '0.0.28'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+
+}

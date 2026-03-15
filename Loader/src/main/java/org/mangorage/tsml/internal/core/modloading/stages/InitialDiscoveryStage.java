@@ -1,7 +1,7 @@
 package org.mangorage.tsml.internal.core.modloading.stages;
 
-import org.mangorage.tsml.internal.core.jarjar.WrappedJar;
-import org.mangorage.tsml.api.jar.IJar;
+import org.mangorage.jar.IJar;
+import org.mangorage.jar.WrappedJar;
 import org.mangorage.tsml.internal.core.modloading.JarJarResolver;
 
 import java.io.IOException;

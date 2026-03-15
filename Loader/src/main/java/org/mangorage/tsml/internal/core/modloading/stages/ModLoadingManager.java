@@ -1,10 +1,10 @@
 package org.mangorage.tsml.internal.core.modloading.stages;
 
+import org.mangorage.jar.IJar;
 import org.mangorage.tsml.api.logger.ILoaderLogger;
 import org.mangorage.tsml.api.mod.Environment;
 import org.mangorage.tsml.api.mod.IModPreLaunch;
 import org.mangorage.tsml.api.mod.ModLoadingState;
-import org.mangorage.tsml.api.jar.IJar;
 
 import java.net.URL;
 import java.util.List;

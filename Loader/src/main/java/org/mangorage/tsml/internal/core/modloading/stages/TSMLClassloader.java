@@ -1,11 +1,14 @@
 package org.mangorage.tsml.internal.core.modloading.stages;
 
+import org.mangorage.jar.IJar;
+import org.mangorage.jar.JarClassloader;
 import org.mangorage.tsml.api.classloader.IClassTransformer;
-import org.mangorage.tsml.api.jar.IJar;
+import org.mangorage.tsml.api.classloader.ITSMLClassloader;
+
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public final class TSMLClassloader extends JarClassloader {
+public final class TSMLClassloader extends JarClassloader implements ITSMLClassloader {
 
     static {
         ClassLoader.registerAsParallelCapable();
@@ -33,6 +36,27 @@ public final class TSMLClassloader extends JarClassloader {
                     });
         });
     }
+
+
+    // ------------------- ITSMLClassloader -------------------
+
+    @Override
+    public byte[] getClassBytes(String name) {
+        String path = name.replace('.', '/') + ".class";
+        return getResourceBytes(path);
+    }
+
+    @Override
+    public boolean hasClass(final String name) {
+        if (!getLoaded().contains("Launcher")) return false;
+        return findLoadedClass(name.replace('/', '.')) != null;
+    }
+
+    @Override
+    public List<IJar> getJars() {
+        return super.getJars();
+    }
+
 
     /**
      * @param name -> Name of the class we want to transform

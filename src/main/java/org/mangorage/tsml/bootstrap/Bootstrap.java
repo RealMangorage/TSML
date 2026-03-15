@@ -1,8 +1,9 @@
 package org.mangorage.tsml.bootstrap;
 
+import org.mangorage.jar.IJar;
+import org.mangorage.jar.JarClassloader;
+import org.mangorage.jar.WrappedJar;
 import org.mangorage.tsml.bootstrap.internal.TSMLDefaultLogger;
-import org.mangorage.tsml.bootstrap.internal.core.nested.WrappedJar;
-import org.mangorage.tsml.bootstrap.internal.core.nested.IJar;
 import java.net.URL;
 import java.util.List;
 
@@ -16,6 +17,7 @@ public final class Bootstrap {
 
             URL bootstrapJarURL = Bootstrap.class.getProtectionDomain().getCodeSource().getLocation();
             IJar bootstrapJar = WrappedJar.create(bootstrapJarURL.getFile());
+
 
 
             TSMLDefaultLogger.getInstance().info("Starting TSML Bootstrap...");
@@ -34,7 +36,7 @@ public final class Bootstrap {
 
             TSMLDefaultLogger.getInstance().info("Creating classloader and starting TSML...");
 
-            final var bootstrapClassloader = new BootstrapClassloader(loaderJars, Bootstrap.class.getClassLoader());
+            final var bootstrapClassloader = new JarClassloader(loaderJars, Bootstrap.class.getClassLoader());
 
             Thread.currentThread().setContextClassLoader(bootstrapClassloader);
             final var mainClass = Class.forName(LAUNCH_CLASS, true, bootstrapClassloader);

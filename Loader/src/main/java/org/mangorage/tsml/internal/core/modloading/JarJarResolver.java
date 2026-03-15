@@ -1,7 +1,7 @@
 package org.mangorage.tsml.internal.core.modloading;
 
 import com.google.gson.Gson;
-import org.mangorage.tsml.api.jar.IJar;
+import org.mangorage.jar.IJar;
 import org.mangorage.tsml.internal.core.jarjar.JarJarMetadata;
 import org.mangorage.tsml.internal.core.jarjar.JarMetadata;
 import org.mangorage.tsml.internal.core.jarjar.VersionMetadata;

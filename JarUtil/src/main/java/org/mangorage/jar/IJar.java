@@ -1,4 +1,4 @@
-package org.mangorage.tsml.api.jar;
+package org.mangorage.jar;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,6 +15,8 @@ public interface IJar {
 
     /** Get a nested jar by path, e.g. "libs/foo.jar" */
     IJar getNestedJar(String path) throws IOException;
+
+    List<IJar> getNestedJars();
 
     /* =========================
        File access API

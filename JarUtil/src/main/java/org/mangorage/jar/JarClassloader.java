@@ -1,7 +1,4 @@
-package org.mangorage.tsml.internal.core.modloading.stages;
-
-import org.mangorage.tsml.api.classloader.ITSMLClassloader;
-import org.mangorage.tsml.api.jar.IJar;
+package org.mangorage.jar;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,7 +10,7 @@ import java.security.ProtectionDomain;
 import java.security.SecureClassLoader;
 import java.util.*;
 
-public sealed class JarClassloader extends SecureClassLoader implements ITSMLClassloader permits TSMLClassloader {
+public class JarClassloader extends SecureClassLoader {
 
     static {
         ClassLoader.registerAsParallelCapable();
@@ -22,7 +19,7 @@ public sealed class JarClassloader extends SecureClassLoader implements ITSMLCla
     private final List<IJar> jars;
     private final Set<String> loaded = new HashSet<>();
 
-    JarClassloader(List<IJar> jars, ClassLoader parent) {
+    public JarClassloader(List<IJar> jars, ClassLoader parent) {
         super(parent);
         this.jars = jars;
     }
@@ -74,24 +71,11 @@ public sealed class JarClassloader extends SecureClassLoader implements ITSMLCla
         return original;
     }
 
-    // ------------------- ITSMLClassloader -------------------
-
-    @Override
     public byte[] getClassBytes(String name) {
         String path = name.replace('.', '/') + ".class";
         return getResourceBytes(path);
     }
 
-    @Override
-    public boolean hasClass(final String name) {
-        if (!loaded.contains("Launcher")) return false;
-        return findLoadedClass(name.replace('/', '.')) != null;
-    }
-
-    @Override
-    public List<IJar> getJars() {
-        return Collections.unmodifiableList(jars);
-    }
 
     // ------------------- Resource Handling -------------------
 
@@ -150,6 +134,14 @@ public sealed class JarClassloader extends SecureClassLoader implements ITSMLCla
         return Collections.enumeration(urls);
     }
 
+    protected Set<String> getLoaded() {
+        return loaded;
+    }
+
+    public List<IJar> getJars() {
+        return Collections.unmodifiableList(jars);
+    }
+
     /*
         USEFUL HELPERS
      */
@@ -161,7 +153,7 @@ public sealed class JarClassloader extends SecureClassLoader implements ITSMLCla
         return null;
     }
 
-    private byte[] getResourceBytes(String name) {
+    protected byte[] getResourceBytes(String name) {
         try (InputStream is = getResourceAsStream(name)) {
             if (is == null) return null;
             return is.readAllBytes();
