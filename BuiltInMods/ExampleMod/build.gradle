@@ -10,7 +10,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly project(":Loader")
+    compileOnly project(":Modules:Loader")
 }
 
 processResources {

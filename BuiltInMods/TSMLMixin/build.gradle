@@ -27,7 +27,7 @@ repositories {
 
 
 dependencies {
-    compileOnly(project(":Loader"))
+    compileOnly(project(":Modules:Loader"))
 
     compileOnly('net.fabricmc:sponge-mixin:0.17.0+mixin.0.8.7')
     compileOnly('io.github.llamalad7:mixinextras-common:0.5.3')

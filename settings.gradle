@@ -16,8 +16,9 @@ pluginManagement {
 
 rootProject.name = 'TSML'
 
-include 'Loader'
-include 'JarUtil'
+include 'Modules:JarUtil'
+include 'Modules:Loader'
+
 include 'BuiltInMods'
 include 'BuiltInMods:ExampleMod'
 include 'BuiltInMods:TSMLMixin'

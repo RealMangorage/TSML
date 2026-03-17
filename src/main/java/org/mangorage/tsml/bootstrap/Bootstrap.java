@@ -1,10 +1,6 @@
 package org.mangorage.tsml.bootstrap;
 
-import org.apache.commons.vfs2.FileObject;
-import org.apache.commons.vfs2.FileSystemManager;
-import org.apache.commons.vfs2.VFS;
 import org.mangorage.jar.IJar;
-import org.mangorage.jar.JarClassloader;
 import org.mangorage.jar.SpeedyJarClassLoader;
 import org.mangorage.jar.VFSJar;
 import org.mangorage.tsml.bootstrap.internal.TSMLDefaultLogger;
@@ -14,33 +10,8 @@ import java.util.List;
 public final class Bootstrap {
     private static final String LAUNCH_CLASS = "org.mangorage.tsml.internal.core.modloading.stages.ModLoadingManager";
 
-    public static void test() {
-        try {
-            FileSystemManager manager = VFS.getManager();
-
-            // Note the triple protocol layering for a nested JAR
-            // jar: (the inner jar contents)
-            // jar: (the outer jar contents)
-            // file: (the actual physical file on the F: drive)
-            String nestedUri = "jar:jar:file:///F:/HytaleProjects/TSML/build/libs/TSML-0.0.28-all.jar!/example.jar!/";
-
-            try (FileObject exampleJarRoot = manager.resolveFile(nestedUri)) {
-                System.out.println("Successfully resolved: " + exampleJarRoot.getName().getFriendlyURI());
-
-                // Listing the files inside example.jar
-                for (FileObject child : exampleJarRoot.getChildren()) {
-                    System.out.println("Internal Entry: " + child.getName().getBaseName());
-                }
-            }
-        } catch (Exception e) {
-            // VFS is sensitive to URI formatting (slashes and !)
-            e.printStackTrace();
-        }
-    }
-
 
     public static void main(String[] args) {
-        test();
         try {
             final var time = System.currentTimeMillis();
 
