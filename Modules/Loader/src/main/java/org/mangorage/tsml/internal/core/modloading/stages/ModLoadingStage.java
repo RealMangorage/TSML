@@ -15,7 +15,6 @@ import org.mangorage.tsml.api.TSMLLogger;
 import org.mangorage.tsml.api.classloader.ITSMLClassloader;
 import org.mangorage.tsml.api.dependency.Dependency;
 import org.mangorage.tsml.api.mod.IModContainer;
-import org.mangorage.tsml.api.mod.Mod;
 import org.mangorage.tsml.internal.core.modloading.ModInfo;
 import org.mangorage.tsml.internal.mod.BuiltInMod;
 
@@ -37,10 +36,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
-import java.util.stream.Collectors;
 
 public final class ModLoadingStage {
 
