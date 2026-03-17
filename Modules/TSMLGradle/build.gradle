@@ -1,0 +1,28 @@
+plugins {
+    id 'java'
+    id 'java-gradle-plugin'
+}
+
+group = 'org.mangorage'
+version = '0.0.51'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation gradleApi()
+}
+
+gradlePlugin {
+    plugins {
+        // "tsmlSetup" is just an internal name for the block, it can be anything
+        tsmlSetup {
+            // THIS is the magic string you will use in your other projects
+            id = 'org.mangorage.tsml.gradle'
+
+            // This is the fully qualified path to your plugin's main class
+            implementationClass = 'org.mangorage.tsml.gradle.TSMLGradlePlugin'
+        }
+    }
+}

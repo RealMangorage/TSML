@@ -1,8 +1,10 @@
 plugins {
     id 'java'
-    id 'application'
     id 'net.minecraftforge.jarjar' version '+'
+    id 'org.mangorage.tsml.gradle'
 }
+
+apply plugin: 'org.mangorage.tsml.gradle'
 
 group = 'org.mangorage'
 version = "$TSML_VERSION"
@@ -65,37 +67,10 @@ dependencies {
     jarJar(project(":BuiltInMods:ExampleMod"))
 }
 
-
-application {
-    mainClass = 'org.mangorage.tsml.bootstrap.Bootstrap'
-}
-
-// Optional runGame
-tasks.register('runGame', JavaExec) {
-    group = 'application'
-    description = 'Runs the TSML game'
-
-    def combinedClasspath = files(
-            tasks.getByName("jarJar")
-    )
-
-    classpath = combinedClasspath
-    mainClass = application.mainClass
-
-    workingDir = file("$buildDir/run")
-    doFirst { workingDir.mkdirs() }
-
-    javaLauncher = javaToolchains.launcherFor {
-        languageVersion = JavaLanguageVersion.of(17)
-    }
-
-    jvmArgs '-Xms512M', '-Xmx2G'
-}
-
 jar {
     manifest {
         attributes(
-                'Main-Class': application.mainClass
+                'Main-Class': 'org.mangorage.tsml.bootstrap.Bootstrap'
         )
     }
 }

@@ -16,6 +16,8 @@ pluginManagement {
 
 rootProject.name = 'TSML'
 
+includeBuild("Modules/TSMLGradle")
+
 include 'Modules:JarUtil'
 include 'Modules:Loader'
 
