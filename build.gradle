@@ -1,3 +1,5 @@
+import org.mangorage.tsml.gradle.Helper
+
 plugins {
     id 'java'
     id 'net.minecraftforge.jarjar' version '+'
@@ -18,45 +20,24 @@ configurations {
         canBeResolved = true
         canBeConsumed = false
     }
-    run {
+    shade {
         canBeResolved = true
         canBeConsumed = true
     }
+
+    compileOnly.extendsFrom(shade)
 }
 
 jarJar.register() {
-    def outputTxt = new File(temporaryDir, "output.txt")
-    outputTxt.text = configurations.jarJarLoader.files.collect { it.name }.join(System.lineSeparator())
-
-    dependsOn ":Modules:JarUtil:classes"
-
-    from({
-        configurations.getByName("run").files.collect { zipTree(it) }
-    }) {
-        // Flatten or keep paths as needed
-        into ''  // empty = root
-        // Avoid manifest collisions
-        exclude 'META-INF/MANIFEST.MF'
-    }
-
-    from({ configurations.jarJarLoader.files }) {
-        into 'JarJarLoader'
-    }
-
-    // Include the output.txt
-    from(outputTxt) {
-        into 'JarJarLoader'
-    }
+    Helper.shade(project, it, configurations.shade)
+    Helper.merge(project, it, configurations.jarJarLoader)
 
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
 
 dependencies {
-    run project(":Modules:JarUtil")
-    run 'org.apache.commons:commons-vfs2:2.10.0'
-
-    compileOnly 'org.apache.commons:commons-vfs2:2.10.0'
-    compileOnly(project(":Modules:JarUtil"))
+    shade project(":Modules:JarUtil")
+    shade 'org.apache.commons:commons-vfs2:2.10.0'
 
     jarJarLoader(project(":Modules:Loader"))
     jarJarLoader('io.github.classgraph:classgraph:4.8.179')
