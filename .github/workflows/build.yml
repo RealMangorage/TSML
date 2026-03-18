@@ -12,12 +12,14 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      # Pass GitHub secret as env variable
-      TSMLEncryptToken: ${{ secrets.TSMLENCRYPTTOKEN }}
+      TSMLEncryptToken: ${{ secrets.TSMLEncryptToken }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
 
       - name: Build TSML
         run: ./gradlew build -PTSMLEncryptToken=$TSMLEncryptToken
