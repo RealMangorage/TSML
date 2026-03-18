@@ -44,6 +44,8 @@ TSMLDevConfig {
     } else {
         logger.lifecycle("Skipping addEncryptFile: gameJars folder does not exist")
     }
+
+    setLoaderFile(tasks.jarJar.outputs.files.singleFile)
 }
 
 

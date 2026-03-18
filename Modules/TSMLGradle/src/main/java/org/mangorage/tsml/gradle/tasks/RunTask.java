@@ -3,10 +3,13 @@ package org.mangorage.tsml.gradle.tasks;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.tasks.JavaExec;
 import org.mangorage.tsml.gradle.Helper;
+import org.mangorage.tsml.gradle.TSMLGradlePlugin;
 
 import javax.inject.Inject;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class RunTask extends JavaExec {
@@ -22,14 +25,15 @@ public abstract class RunTask extends JavaExec {
         }
 
         // Create your module path from the config
-        FileCollection classPath = getProject().getTasksByName("jarJar", false)
-                .stream()
-                .findFirst()
-                .orElseThrow()
-                .getOutputs()
-                .getFiles();
 
-        setClasspath(classPath); // EMPTY CLASSPATH, this is MODULE mode
+        List<File> files = new ArrayList<>();
+
+        final var manualLoader = TSMLGradlePlugin.getDevConfig().getLoaderFile();
+        if (manualLoader != null && manualLoader.exists()) {
+            files.add(manualLoader);
+        }
+
+        setClasspath(getProject().files(files));
         getMainClass().set("org.mangorage.tsml.bootstrap.Bootstrap");
 
         setArgs(

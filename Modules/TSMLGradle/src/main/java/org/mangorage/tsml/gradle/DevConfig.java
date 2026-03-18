@@ -29,6 +29,7 @@ public final class DevConfig {
 
     private File clientFile;
     private File serverFile;
+    private File loaderFile;
 
     public DevConfig() {}
 
@@ -41,6 +42,10 @@ public final class DevConfig {
         return serverFile;
     }
 
+    public File getLoaderFile() {
+        return loaderFile;
+    }
+
     // Setters
     public void setClientFile(File clientFile) {
         this.clientFile = clientFile;
@@ -48,5 +53,9 @@ public final class DevConfig {
 
     public void setServerFile(File serverFile) {
         this.serverFile = serverFile;
+    }
+
+    public void setLoaderFile(File loaderFile) {
+        this.loaderFile = loaderFile;
     }
 }
