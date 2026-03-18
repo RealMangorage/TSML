@@ -50,7 +50,7 @@ public final class ModLoadingManager {
 
         state = ModLoadingState.INITIAL_SETUP;
 
-        final IJar triviaSpireJar = INITIAL_DISCOVERY_STAGE.run(baseResource, discoveredJars);
+        final IJar triviaSpireJar = INITIAL_DISCOVERY_STAGE.run(baseResource, discoveredJars, args);
 
         state = ModLoadingState.MOD_DISCOVERY;
         final ModSetupStage.StageResult initialStageResult = MOD_SETUP_STAGE.run(discoveredJars, triviaSpireJar, ModLoadingManager::setupLogger, ModLoadingManager::setEnvironment);

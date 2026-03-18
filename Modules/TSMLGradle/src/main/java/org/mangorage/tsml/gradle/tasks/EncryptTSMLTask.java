@@ -2,7 +2,8 @@ package org.mangorage.tsml.gradle.tasks;
 
 import org.gradle.api.DefaultTask;
 import org.gradle.api.tasks.TaskAction;
-import org.mangorage.tsml.gradle.FileCrypto;
+import org.mangorage.tsml.gradle.DevConfig;
+import org.mangorage.tsml.gradle.util.EncryptionUtil;
 import org.mangorage.tsml.gradle.TSMLGradlePlugin;
 
 import javax.inject.Inject;
@@ -17,37 +18,40 @@ public abstract class EncryptTSMLTask extends DefaultTask {
 
     @TaskAction
     public void exec() {
-        final var files = TSMLGradlePlugin.getDevConfig().getFileSet();
-        final var token = (String) getProject().findProperty("TSMLEncryptToken");
+        DevConfig config = TSMLGradlePlugin.getDevConfig();
 
+        // Fetch token
+        String token = (String) getProject().findProperty("TSMLEncryptToken");
         if (token == null || token.isEmpty()) {
             throw new RuntimeException("Missing TSMLEncryptToken environment variable");
         }
 
-        // Root project output folder
-        File outputDir = new File(getProject().getRootDir(), "encryptedFiles");
+        File baseOutputDir = new File(getProject().getRootDir(), "encryptedFiles");
 
-        if (!outputDir.exists() && !outputDir.mkdirs()) {
-            throw new RuntimeException("Failed to create output directory: " + outputDir);
+        // Encrypt client file into encryptedFiles/client/
+        File clientFile = config.getClientFile();
+        if (clientFile != null && clientFile.exists()) {
+            File clientDir = new File(baseOutputDir, "client");
+            if (!clientDir.exists() && !clientDir.mkdirs()) {
+                throw new RuntimeException("Failed to create client output directory: " + clientDir);
+            }
+
+            File encryptedClient = new File(clientDir, clientFile.getName() + ".enc");
+            EncryptionUtil.encryptFile(clientFile, encryptedClient, token);
+            getLogger().lifecycle("Encrypted client: {} -> {}", clientFile.getName(), encryptedClient.getPath());
         }
 
-        getLogger().lifecycle("Encrypting {} files into {}", files.size(), outputDir);
-
-        for (File input : files) {
-            if (!input.exists()) {
-                getLogger().warn("Skipping missing file: {}", input);
-                continue;
+        // Encrypt server file into encryptedFiles/server/
+        File serverFile = config.getServerFile();
+        if (serverFile != null && serverFile.exists()) {
+            File serverDir = new File(baseOutputDir, "server");
+            if (!serverDir.exists() && !serverDir.mkdirs()) {
+                throw new RuntimeException("Failed to create server output directory: " + serverDir);
             }
 
-            // Preserve filename + add .enc
-            File output = new File(outputDir, input.getName() + ".enc");
-
-            try {
-                FileCrypto.encryptFile(input, output, token);
-                getLogger().lifecycle("Encrypted: {} -> {}", input.getName(), output.getName());
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to encrypt: " + input, e);
-            }
+            File encryptedServer = new File(serverDir, serverFile.getName() + ".enc");
+            EncryptionUtil.encryptFile(serverFile, encryptedServer, token);
+            getLogger().lifecycle("Encrypted server: {} -> {}", serverFile.getName(), encryptedServer.getPath());
         }
 
         getLogger().lifecycle("Encryption complete.");

@@ -39,13 +39,13 @@ TSMLDevConfig {
     File gameJarsDir = getRootProject().file("gameJars")
 
     if (gameJarsDir.exists() && gameJarsDir.isDirectory()) {
-        addEncryptFile(getRootProject().files("gameJars/TriviaSpire-1.0.0.jar").singleFile)
+        setClientFile(getRootProject().files("gameJars/TriviaSpire-Client-1.0.0.jar").singleFile)
+        setServerFile(getRootProject().files("gameJars/TriviaSpire-Server-1.0.0.jar").singleFile)
     } else {
         logger.lifecycle("Skipping addEncryptFile: gameJars folder does not exist")
     }
 }
 
-Helper.decrypt(getRootProject())
 
 dependencies {
     shade project(":Modules:JarUtil")

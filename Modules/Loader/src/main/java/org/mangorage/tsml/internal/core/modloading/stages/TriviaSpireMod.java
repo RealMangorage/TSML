@@ -22,6 +22,7 @@ public final class TriviaSpireMod {
 
     public void init(String mainClass, String[] args) {
         try {
+            args = new String[]{};
             final var clazz = Class.forName(mainClass, false, Thread.currentThread().getContextClassLoader());
             clazz.getMethod("main", String[].class).invoke(null, (Object) args);
         } catch (ClassNotFoundException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {

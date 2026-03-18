@@ -5,6 +5,7 @@ import org.mangorage.jar.SpeedyJarClassLoader;
 import org.mangorage.jar.VFSJar;
 import org.mangorage.tsml.bootstrap.internal.TSMLDefaultLogger;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.List;
 
 public final class Bootstrap {
@@ -12,6 +13,7 @@ public final class Bootstrap {
 
 
     public static void main(String[] args) {
+        System.out.println(Arrays.toString(args));
         try {
             final var time = System.currentTimeMillis();
 

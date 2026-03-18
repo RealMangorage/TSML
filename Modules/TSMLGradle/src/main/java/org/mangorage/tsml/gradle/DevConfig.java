@@ -23,21 +23,30 @@
 package org.mangorage.tsml.gradle;
 
 import java.io.File;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Objects;
 
 public final class DevConfig {
 
-    private Set<File> fileSet = new HashSet<>();
+    private File clientFile;
+    private File serverFile;
 
     public DevConfig() {}
 
-    public void addEncryptFile(File file) {
-        this.fileSet.add(file);
+    // Getters
+    public File getClientFile() {
+        return clientFile;
     }
 
-    public Set<File> getFileSet() {
-        return fileSet;
+    public File getServerFile() {
+        return serverFile;
     }
 
+    // Setters
+    public void setClientFile(File clientFile) {
+        this.clientFile = clientFile;
+    }
+
+    public void setServerFile(File serverFile) {
+        this.serverFile = serverFile;
+    }
 }

@@ -59,7 +59,6 @@ public final class ModSetupStage {
         final TSMLClassloader tsmlClassloader = new TSMLClassloader(modJars, new SpeedyJarClassLoader(libraryJars, current));
         Thread.currentThread().setContextClassLoader(tsmlClassloader);
 
-        tsmlClassloader.loadClass("org.tinylog.converters.GzipEncoder");
 
         final var clientClass = "com.imjustdoom.triviaspire.lwjgl3.Lwjgl3Launcher";
         final var serverClass = "com.imjustdoom.triviaspire.server.ServerLauncher";

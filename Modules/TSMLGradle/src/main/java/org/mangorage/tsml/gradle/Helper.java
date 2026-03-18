@@ -4,10 +4,9 @@ import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.tasks.bundling.Jar;
+import org.mangorage.tsml.gradle.util.EncryptionUtil;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
@@ -34,86 +33,25 @@ public final class Helper {
         });
     }
 
-    public static FileCollection decrypt(Project project) {
-        // Directory where encrypted files live
-        File encryptedDir = new File(project.getRootDir(), "encryptedFiles");
-        if (!encryptedDir.exists()) {
-            throw new RuntimeException("encryptedFiles directory does not exist");
-        }
 
-        // Output directory: build/run
-        File runDir = new File(project.getBuildDir(), "run");
-        if (!runDir.exists() && !runDir.mkdirs()) {
-            throw new RuntimeException("Failed to create run directory: " + runDir);
-        }
 
-        // Delete old decrypted-* files
-        File[] existing = runDir.listFiles((dir, name) -> name.startsWith("decrypted"));
-        if (existing != null) {
-            for (File f : existing) {
-                if (!f.delete()) {
-                    throw new RuntimeException("Failed to delete old file: " + f);
-                }
-            }
-        }
-
-        // Fetch token
-        String token = project.findProperty("TSMLEncryptToken") != null
-                ? project.findProperty("TSMLEncryptToken").toString()
-                : System.getenv("TSMLEncryptToken");
-
-        if (token == null || token.isEmpty()) {
-            throw new RuntimeException("Missing TSMLEncryptToken");
-        }
-
-        List<File> outputs = new ArrayList<>();
-
-        File[] encryptedFiles = encryptedDir.listFiles((dir, name) -> name.endsWith(".enc"));
-        if (encryptedFiles == null || encryptedFiles.length == 0) {
-            return project.files(); // nothing to decrypt
-        }
-
-        for (File input : encryptedFiles) {
-            try {
-                // Strip .enc
-                String baseName = input.getName().substring(0, input.getName().length() - 4);
-
-                // Remove .jar if it’s already there to avoid .jar.jar
-                if (baseName.endsWith(".jar")) {
-                    baseName = baseName.substring(0, baseName.length() - 4);
-                }
-
-                // Final output name: decrypted-<name>.jar
-                File output = new File(runDir, "decrypted-" + baseName + ".jar");
-
-                // Perform decryption
-                FileCrypto.decryptFile(input, output, token);
-
-                outputs.add(output);
-
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to decrypt: " + input, e);
-            }
-        }
-
-        return project.files(outputs);
+    /** Lazily decrypts and returns the client file as a FileCollection. */
+    public static FileCollection getClient(Project project) {
+        final var config = TSMLGradlePlugin.getDevConfig();
+        File decrypted = decryptIfNeeded(project, config.getClientFile(), "client");
+        return project.files(decrypted);
     }
 
-    public static FileCollection getDecryptedFiles(Project project) {
-        File runDir = new File(project.getBuildDir(), "run");
+    /** Lazily decrypts and returns the server file as a FileCollection. */
+    public static FileCollection getServer(Project project) {
+        final var config = TSMLGradlePlugin.getDevConfig();
+        File decrypted = decryptIfNeeded(project, config.getServerFile(), "server");
+        return project.files(decrypted);
+    }
 
-        if (!runDir.exists()) {
-            return project.files(); // empty, nothing to return
-        }
-
-        File[] files = runDir.listFiles((dir, name) ->
-                name.startsWith("decrypted") && name.endsWith(".jar")
-        );
-
-        if (files == null || files.length == 0) {
-            return project.files(); // still empty
-        }
-
-        return project.files((Object[]) files);
+    /** Core lazy decryption logic. Finds encrypted file automatically and decrypts if needed. */
+    private static File decryptIfNeeded(Project project, File originalFile, String type) {
+        // Just call the new helper — it handles locating the encrypted file, lazy decryption, token, and output path
+        return EncryptionUtil.decrypt(project, originalFile, type);
     }
 }

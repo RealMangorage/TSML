@@ -6,6 +6,7 @@ import org.gradle.api.Project;
 import org.mangorage.tsml.gradle.core.TaskRegistry;
 import org.mangorage.tsml.gradle.tasks.EncryptTSMLTask;
 import org.mangorage.tsml.gradle.tasks.RunTask;
+import org.mangorage.tsml.gradle.tasks.RunType;
 
 public final class TSMLGradlePlugin implements Plugin<Project> {
 
@@ -26,7 +27,8 @@ public final class TSMLGradlePlugin implements Plugin<Project> {
         devConfigStatic = devConfig;
 
         taskRegistry.register(t -> {
-            t.register("runGame", RunTask.class);
+            t.register("runGameClient", RunTask.class, RunType.CLIENT);
+            t.register("runGameServer", RunTask.class, RunType.SERVER);
             t.register("encryptGame", EncryptTSMLTask.class);
         });
     }

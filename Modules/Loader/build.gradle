@@ -17,8 +17,6 @@ dependencies {
 
     compileOnly 'org.apache.commons:commons-vfs2:2.10.0'
 
-    compileOnly Helper.getDecryptedFiles(getRootProject())
-
     compileOnly('net.fabricmc:sponge-mixin:0.17.0+mixin.0.8.7')
     compileOnly('io.github.llamalad7:mixinextras-common:0.5.3')
     // CHANGED: Use 'implementation' so it gets shadowed into the JAR
