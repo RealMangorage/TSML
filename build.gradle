@@ -8,10 +8,6 @@ plugins {
 
 apply plugin: 'org.mangorage.tsml.gradle'
 
-subprojects {
-    apply plugin: 'org.mangorage.tsml.gradle'
-}
-
 group = 'org.mangorage'
 version = "$TSML_VERSION"
 

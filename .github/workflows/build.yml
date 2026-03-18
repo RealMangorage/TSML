@@ -1,0 +1,23 @@
+name: Build TSML
+
+on:
+  push:
+    paths:
+      - 'src/**'    # Only trigger if TSMLCore changes
+      - 'BuiltInMods/**'
+      - 'Modules/JarUtil/**'
+      - 'Modules/Loader/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      # Pass GitHub secret as env variable
+      TSMLEncryptToken: ${{ secrets.TSMLENCRYPTTOKEN }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Build TSML
+        run: ./gradlew build -PTSMLEncryptToken=$TSMLEncryptToken
