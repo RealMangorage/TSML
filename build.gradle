@@ -29,9 +29,7 @@ configurations {
 }
 
 jarJar.register() {
-
     archiveClassifier = null
-
 
     Helper.shade(project, it, configurations.shade)
     Helper.merge(project, it, configurations.jarJarLoader)
@@ -61,7 +59,7 @@ dependencies {
 }
 
 jar {
-    enabled = false
+    enabled = true
 }
 
 artifacts {
