@@ -16,12 +16,14 @@ public final class EncryptionUtil {
      * @return The decrypted File
      */
     public static File decrypt(Project project, File originalFile, String type) {
-        if (originalFile == null || !originalFile.exists()) {
-            throw new RuntimeException("Original file does not exist: " + originalFile);
+        if (originalFile == null) {
+            throw new RuntimeException("Original file cannot be null");
         }
 
+        String fileName = originalFile.getName();
+
         // Encrypted file location: encryptedFiles/<type>/<name>.enc
-        File encryptedFile = new File(project.getRootDir(), "encryptedFiles/" + type + "/" + originalFile.getName() + ".enc");
+        File encryptedFile = new File(project.getRootDir(), "encryptedFiles/" + type + "/" + fileName + ".enc");
         if (!encryptedFile.exists()) {
             throw new RuntimeException("Encrypted file not found: " + encryptedFile);
         }
@@ -32,12 +34,12 @@ public final class EncryptionUtil {
             throw new RuntimeException("Failed to create decrypted directory: " + decryptedDir);
         }
 
-        File decryptedFile = new File(decryptedDir, originalFile.getName());
+        File decryptedFile = new File(decryptedDir, fileName);
         if (!decryptedFile.exists()) {
-            // Fetch token
             String token = project.findProperty("TSMLEncryptToken") != null
                     ? project.findProperty("TSMLEncryptToken").toString()
                     : System.getenv("TSMLEncryptToken");
+
             if (token == null || token.isEmpty()) {
                 throw new RuntimeException("Missing TSMLEncryptToken");
             }
