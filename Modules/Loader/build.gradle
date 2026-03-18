@@ -12,7 +12,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly project(":")
+    compileOnly getRootProject()
     compileOnly project(":Modules:JarUtil")
 
     compileOnly 'org.apache.commons:commons-vfs2:2.10.0'
