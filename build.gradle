@@ -29,6 +29,10 @@ configurations {
 }
 
 jarJar.register() {
+
+    archiveClassifier = null
+
+
     Helper.shade(project, it, configurations.shade)
     Helper.merge(project, it, configurations.jarJarLoader)
 
@@ -44,12 +48,12 @@ TSMLDevConfig {
     } else {
         logger.lifecycle("Skipping addEncryptFile: gameJars folder does not exist")
     }
-
-    setLoaderFile(tasks.jarJar.outputs.files.singleFile)
 }
 
 
 dependencies {
+    loader project(":")
+
     shade project(":Modules:JarUtil")
     shade 'org.apache.commons:commons-vfs2:2.10.0'
 
@@ -63,9 +67,11 @@ dependencies {
 }
 
 jar {
-    manifest {
-        attributes(
-                'Main-Class': 'org.mangorage.tsml.bootstrap.Bootstrap'
-        )
-    }
+    enabled = false
 }
+
+artifacts {
+    archives tasks.named("jarJar")
+}
+
+build.dependsOn tasks.named("jarJar")
