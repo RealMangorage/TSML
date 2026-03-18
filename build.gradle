@@ -8,6 +8,10 @@ plugins {
 
 apply plugin: 'org.mangorage.tsml.gradle'
 
+subprojects {
+    apply plugin: 'org.mangorage.tsml.gradle'
+}
+
 group = 'org.mangorage'
 version = "$TSML_VERSION"
 
@@ -34,6 +38,18 @@ jarJar.register() {
 
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
+
+TSMLDevConfig {
+    File gameJarsDir = getRootProject().file("gameJars")
+
+    if (gameJarsDir.exists() && gameJarsDir.isDirectory()) {
+        addEncryptFile(getRootProject().files("gameJars/TriviaSpire-1.0.0.jar").singleFile)
+    } else {
+        logger.lifecycle("Skipping addEncryptFile: gameJars folder does not exist")
+    }
+}
+
+Helper.decrypt(getRootProject())
 
 dependencies {
     shade project(":Modules:JarUtil")

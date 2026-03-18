@@ -1,9 +1,13 @@
+import org.mangorage.tsml.gradle.TSML
+
 plugins {
     id 'java'
 }
 
 group = 'org.mangorage'
 version = '0.0.2'
+
+TSML.disable()
 
 repositories {
     mavenCentral()

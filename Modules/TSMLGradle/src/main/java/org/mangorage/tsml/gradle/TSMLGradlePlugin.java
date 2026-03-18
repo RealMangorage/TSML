@@ -34,5 +34,6 @@ public final class TSMLGradlePlugin implements Plugin<Project> {
     @Override
     public void apply(Project project) {
         project.getExtensions().add("TSMLDevConfig", devConfig);
+        taskRegistry.apply(project);
     }
 }
