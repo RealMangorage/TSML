@@ -30,6 +30,12 @@ public abstract class RunTask extends JavaExec {
                 getProject().getConfigurations().getByName("loader").getFiles()
         );
 
+        for (File file : files) {
+            System.out.println(
+                    "File: " + file
+            );
+        }
+
         setClasspath(getProject().files(files));
         getMainClass().set("org.mangorage.tsml.bootstrap.Bootstrap");
 

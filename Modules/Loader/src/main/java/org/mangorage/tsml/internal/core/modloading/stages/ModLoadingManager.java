@@ -7,6 +7,7 @@ import org.mangorage.tsml.api.mod.IModPreLaunch;
 import org.mangorage.tsml.api.mod.ModLoadingState;
 
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.ServiceLoader;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -45,12 +46,12 @@ public final class ModLoadingManager {
         return environment;
     }
 
-    static void init(URL baseResource, String[] args) throws Exception {
+    static void init(Path loaderJarPath, String[] args) throws Exception {
         final List<IJar> discoveredJars = new CopyOnWriteArrayList<>();
 
         state = ModLoadingState.INITIAL_SETUP;
 
-        final IJar triviaSpireJar = INITIAL_DISCOVERY_STAGE.run(baseResource, discoveredJars, args);
+        final IJar triviaSpireJar = INITIAL_DISCOVERY_STAGE.run(loaderJarPath, discoveredJars, args);
 
         state = ModLoadingState.MOD_DISCOVERY;
         final ModSetupStage.StageResult initialStageResult = MOD_SETUP_STAGE.run(discoveredJars, triviaSpireJar, ModLoadingManager::setupLogger, ModLoadingManager::setEnvironment);
@@ -67,12 +68,12 @@ public final class ModLoadingManager {
         state = ModLoadingState.FINISHED;
     }
 
-    public static void run(URL baseResource, String[] args) throws Exception {
+    public static void run(Object loaderJarPath, String[] args) throws Exception {
         if (state != ModLoadingState.NOT_LOADED) {
             activeLogger.warn("TSML is already initialized, skipping");
             return;
         }
 
-        init(baseResource, args);
+        init((Path) loaderJarPath, args);
     }
 }

@@ -14,7 +14,11 @@ public final class TriviaSpireMod {
             final String mainClass = mod.getProperty("mainClass", String.class).orElseThrow(() -> new IllegalArgumentException("Trivia Spire mod is missing mainClass property"));
 
             final String[] args = mod.getProperty("args", String[].class).orElse(new String[0]);
+
+            System.out.println("Initiating TriviaSpire Itself");
+
             init(mainClass, args);
+
             TSMLLogger.getInternal().info("Shutting everything down!");
             TSMLThreads.shutdown();
         });
@@ -28,8 +32,6 @@ public final class TriviaSpireMod {
         } catch (ClassNotFoundException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             TSMLLogger.getInternal().error("Something went wrong while starting Trivia Spire mod:");
             TSMLLogger.getInternal().error(e);
-
-            e.printStackTrace();
         }
     }
 }

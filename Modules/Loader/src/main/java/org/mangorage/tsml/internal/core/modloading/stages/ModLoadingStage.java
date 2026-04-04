@@ -172,6 +172,7 @@ public final class ModLoadingStage {
 
     public static void initMods() {
         printDependencyGraph();
+
         // Build dependency graph
         Map<String, List<String>> graph = new HashMap<>();
         modContainerMap.forEach((id, mod) -> {
@@ -188,15 +189,19 @@ public final class ModLoadingStage {
 
         // Topological sort to determine load order
         List<String> sorted = topologicalSort(graph);
-        if (sorted == null) {
+        if (sorted == null || sorted.isEmpty()) {
             TSMLLogger.getInternal().error("Failed to sort mods by dependencies (circular dependency detected).");
             return;
         }
 
         // Initialize mods in sorted order
         for (String id : sorted) {
+            System.out.println("Processing Mod (Stage 1) : " + id);
+
             IModContainer mod = modContainerMap.get(id);
             List<Dependency> deps = mod.getDependencies();
+
+            System.out.println("Processing Mod (Stage 2) : " + id);
 
             // Check that all required dependencies are present
             boolean canLoad = true;
@@ -210,20 +215,23 @@ public final class ModLoadingStage {
                 }
             }
 
-            if (!canLoad) continue;
+            System.out.println("Processing Mod (Stage 3) : " + id);
 
-            // Initialize
-            TSMLLogger.getInternal().info("Initializing mod: " + id);
+            if (!canLoad) {
+                System.out.println("Cant load: " + mod);
+                continue;
+            }
 
-            TSMLThreads.run(() -> {
+
                 try {
+                    // Initialize
+                    TSMLLogger.getInternal().info("Initializing mod: " + id);
                     ((ModContainerImpl) mod).init();
                     TSMLLogger.getInternal().info("Initialized mod: " + id);
                 } catch (Throwable e) {
                     TSMLLogger.getInternal().warn("Failed to initialize mod: " + id);
                     TSMLLogger.getInternal().error(e);
                 }
-            });
         }
     }
 

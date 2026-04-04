@@ -27,5 +27,7 @@ public final class Lwjgl3LauncherMixin {
         EarlyWindow.close();
         // You can also change other things here, like the window size
         // config.setWindowedMode(1920, 1080);
+
+
     }
 }

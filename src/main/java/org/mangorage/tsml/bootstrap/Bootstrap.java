@@ -5,6 +5,7 @@ import org.mangorage.jar.SpeedyJarClassLoader;
 import org.mangorage.jar.VFSJar;
 import org.mangorage.tsml.bootstrap.internal.TSMLDefaultLogger;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 
@@ -17,8 +18,11 @@ public final class Bootstrap {
         try {
             final var time = System.currentTimeMillis();
 
-            URL bootstrapJarURL = Bootstrap.class.getProtectionDomain().getCodeSource().getLocation();
-            IJar bootstrapJar = VFSJar.create(bootstrapJarURL);
+            Path bootstrapJarPath = Path.of(
+                    Bootstrap.class.getProtectionDomain().getCodeSource().getLocation().toURI()
+            ).toAbsolutePath();
+
+            IJar bootstrapJar = VFSJar.create(bootstrapJarPath);
 
 
             TSMLDefaultLogger.getInstance().info("Starting TSML Bootstrap...");
@@ -47,11 +51,11 @@ public final class Bootstrap {
             TSMLDefaultLogger.getInstance().info(mainClass.getName());
 
             TSMLDefaultLogger.getInstance().info("Looking for run method...");
-            final var method = mainClass.getMethod("run", URL.class, String[].class);
+            final var method = mainClass.getMethod("run", Object.class, String[].class);
             TSMLDefaultLogger.getInstance().info("Invoking TSML initPublic method...");
             TSMLDefaultLogger.getInstance().info(method.toString());
             System.out.println("Time: " + (System.currentTimeMillis() - time));
-            method.invoke(null, bootstrapJarURL, (Object) args);
+            method.invoke(null, bootstrapJarPath, (Object) args);
         } catch (Throwable e) {
             TSMLDefaultLogger.getInstance().error("Failed to start TSML:");
             TSMLDefaultLogger.getInstance().error(e);
@@ -59,8 +63,6 @@ public final class Bootstrap {
             for (StackTraceElement stackTraceElement : e.getStackTrace()) {
                 TSMLDefaultLogger.getInstance().error("\t" + stackTraceElement);
             }
-
-            e.printStackTrace();
         }
     }
 }

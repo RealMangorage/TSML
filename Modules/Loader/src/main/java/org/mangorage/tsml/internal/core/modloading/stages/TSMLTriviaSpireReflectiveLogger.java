@@ -15,10 +15,10 @@ public final class TSMLTriviaSpireReflectiveLogger implements ILoaderLogger {
         try {
             Method m = delegate.getMethod(methodName, paramType);
             m.invoke(null, arg); // assuming static methods
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException("Delegate does not have method: " + methodName, e);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to invoke delegate method: " + methodName, e);
+            System.out.println(
+                    formatLog((String) arg)
+            );
         }
     }
 

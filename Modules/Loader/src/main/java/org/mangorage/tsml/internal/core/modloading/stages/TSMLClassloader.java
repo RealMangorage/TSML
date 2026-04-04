@@ -28,7 +28,11 @@ public final class TSMLClassloader extends SpeedyJarClassLoader implements ITSML
         ServiceLoader.load(IClassTransformer.class, this)
                 .stream()
                 .forEach(provider -> {
-                    transformers.add(provider.get());
+                    try {
+                        transformers.add(provider.get());
+                    } catch (Throwable e) {
+                        e.printStackTrace();
+                    }
                 });
 
     }

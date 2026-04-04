@@ -72,11 +72,11 @@ public final class InitialDiscoveryStage {
 
 
     /**
-     * @param baseResource → Will be the TSML jar itself
+     * @param loaderJarPath → Will be the TSML jar itself
      * @param finalJars → Add any jars you want exposed.
      * @return The main TriviaSpire.jar, used for the next stage to find the main class and logger class.
      */
-    public IJar run(URL baseResource, List<IJar> finalJars, String[] args) throws IOException {
+    public IJar run(Path loaderJarPath, List<IJar> finalJars, String[] args) throws IOException {
         Path rootPath = Path.of("");
         Path modsPath = rootPath.resolve("mods").toAbsolutePath();
 
@@ -84,7 +84,7 @@ public final class InitialDiscoveryStage {
 
         IJar triviaSpireJar =  findTriviaSpireJar(rootPath, List.of(args));
 
-        IJar tsmlJar = VFSJar.create(baseResource);
+        IJar tsmlJar = VFSJar.create(loaderJarPath);
 
         foundJars.add(tsmlJar);
 

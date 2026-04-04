@@ -1,6 +1,6 @@
 package org.mangorage.tsmlcore;
 
-public class TSMLCoreMod {
+public final class TSMLCoreMod {
     public TSMLCoreMod() {
     }
 }
