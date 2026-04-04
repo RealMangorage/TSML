@@ -1,16 +1,12 @@
 package org.mangorage.tsml.internal.core.modloading.stages;
 
 import com.google.gson.Gson;
-import io.github.classgraph.ClassGraph;
-import io.github.classgraph.ScanResult;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSelectInfo;
 import org.apache.commons.vfs2.FileSelector;
 import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.FileType;
 import org.apache.commons.vfs2.VFS;
-import org.mangorage.jar.IJar;
-import org.mangorage.jar.JarClassloader;
 import org.mangorage.tsml.api.TSMLLogger;
 import org.mangorage.tsml.api.classloader.ITSMLClassloader;
 import org.mangorage.tsml.api.dependency.Dependency;
@@ -18,19 +14,13 @@ import org.mangorage.tsml.api.mod.IModContainer;
 import org.mangorage.tsml.internal.core.modloading.ModInfo;
 import org.mangorage.tsml.internal.mod.BuiltInMod;
 
-import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;

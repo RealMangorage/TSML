@@ -1,10 +1,10 @@
 package org.mangorage.tsml.bootstrap;
 
-import org.mangorage.jar.IJar;
+import org.mangorage.jar.api.IJar;
 import org.mangorage.jar.SpeedyJarClassLoader;
 import org.mangorage.jar.VFSJar;
 import org.mangorage.tsml.bootstrap.internal.TSMLDefaultLogger;
-import java.net.URL;
+
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;

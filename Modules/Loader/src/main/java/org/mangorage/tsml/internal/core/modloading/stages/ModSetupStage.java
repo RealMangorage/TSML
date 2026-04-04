@@ -1,7 +1,6 @@
 package org.mangorage.tsml.internal.core.modloading.stages;
 
-import org.mangorage.jar.IJar;
-import org.mangorage.jar.JarClassloader;
+import org.mangorage.jar.api.IJar;
 import org.mangorage.jar.SpeedyJarClassLoader;
 import org.mangorage.tsml.api.TSMLLogger;
 import org.mangorage.tsml.api.logger.ILoaderLogger;
@@ -9,12 +8,10 @@ import org.mangorage.tsml.api.mod.Environment;
 import org.mangorage.tsml.api.mod.IEarlyMod;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ServiceLoader;
 import java.util.function.Consumer;
-import java.util.jar.Manifest;
 
 public final class ModSetupStage {
     record StageResult(TSMLClassloader classloader, String foundClass) {}

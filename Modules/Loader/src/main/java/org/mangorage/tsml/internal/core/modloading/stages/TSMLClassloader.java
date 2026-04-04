@@ -1,6 +1,6 @@
 package org.mangorage.tsml.internal.core.modloading.stages;
 
-import org.mangorage.jar.IJar;
+import org.mangorage.jar.api.IJar;
 import org.mangorage.jar.SpeedyJarClassLoader;
 import org.mangorage.tsml.api.classloader.IClassTransformer;
 import org.mangorage.tsml.api.classloader.ITSMLClassloader;

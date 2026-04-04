@@ -1,4 +1,4 @@
-package org.mangorage.jar;
+package org.mangorage.jar.api;
 
 import java.io.IOException;
 import java.io.InputStream;

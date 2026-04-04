@@ -1,13 +1,13 @@
 package org.mangorage.tsml.internal.core.modloading.stages;
 
-import org.apache.commons.vfs2.VFS;
-import org.mangorage.jar.IJar;
+import org.mangorage.jar.api.IJar;
 import org.mangorage.jar.VFSJar;
+import org.mangorage.jar.api.JarWithMetadata;
+import org.mangorage.tsml.internal.core.jarjar.JarJarLocator;
 import org.mangorage.tsml.internal.core.modloading.JarJarResolver;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -76,7 +76,7 @@ public final class InitialDiscoveryStage {
      * @param finalJars → Add any jars you want exposed.
      * @return The main TriviaSpire.jar, used for the next stage to find the main class and logger class.
      */
-    public IJar run(Path loaderJarPath, List<IJar> finalJars, String[] args) throws IOException {
+    public IJar run(Path loaderJarPath, List<JarWithMetadata> finalJars, String[] args) throws IOException {
         Path rootPath = Path.of("");
         Path modsPath = rootPath.resolve("mods").toAbsolutePath();
 
@@ -97,7 +97,8 @@ public final class InitialDiscoveryStage {
             }
         }
 
-        final List<IJar> resolvedJars = JarJarResolver.resolveAll(foundJars);
+        // TODO: Update to use service loader for getting locators perhaps? Dunno yet!
+        final List<JarWithMetadata> resolvedJars = JarJarResolver.resolveAll(List.of(new JarJarLocator()), JarWithMetadata.empty(foundJars));
 
         finalJars.addAll(resolvedJars);
 

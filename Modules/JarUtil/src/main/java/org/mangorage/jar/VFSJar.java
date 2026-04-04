@@ -1,11 +1,11 @@
 package org.mangorage.jar;
 
 import org.apache.commons.vfs2.*;
+import org.mangorage.jar.api.IJar;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.*;

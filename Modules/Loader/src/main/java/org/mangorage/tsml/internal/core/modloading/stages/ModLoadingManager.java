@@ -1,12 +1,14 @@
 package org.mangorage.tsml.internal.core.modloading.stages;
 
-import org.mangorage.jar.IJar;
+import org.mangorage.jar.VFSJar;
+import org.mangorage.jar.api.IJar;
+import org.mangorage.jar.api.JarWithMetadata;
 import org.mangorage.tsml.api.logger.ILoaderLogger;
 import org.mangorage.tsml.api.mod.Environment;
 import org.mangorage.tsml.api.mod.IModPreLaunch;
 import org.mangorage.tsml.api.mod.ModLoadingState;
+import org.mangorage.tsml.internal.core.jarjar.JarJarLocator;
 
-import java.net.URL;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.ServiceLoader;
@@ -47,14 +49,16 @@ public final class ModLoadingManager {
     }
 
     static void init(Path loaderJarPath, String[] args) throws Exception {
-        final List<IJar> discoveredJars = new CopyOnWriteArrayList<>();
+
+        final List<JarWithMetadata> discoveredJars = new CopyOnWriteArrayList<>();
 
         state = ModLoadingState.INITIAL_SETUP;
 
         final IJar triviaSpireJar = INITIAL_DISCOVERY_STAGE.run(loaderJarPath, discoveredJars, args);
 
         state = ModLoadingState.MOD_DISCOVERY;
-        final ModSetupStage.StageResult initialStageResult = MOD_SETUP_STAGE.run(discoveredJars, triviaSpireJar, ModLoadingManager::setupLogger, ModLoadingManager::setEnvironment);
+        // TODO: Just stream map it, we dont need to worry about it right away!
+        final ModSetupStage.StageResult initialStageResult = MOD_SETUP_STAGE.run(discoveredJars.stream().map(JarWithMetadata::getJar).toList(), triviaSpireJar, ModLoadingManager::setupLogger, ModLoadingManager::setEnvironment);
 
         state = ModLoadingState.MOD_SCANNING;
         ModLoadingStage.scanMods(initialStageResult.foundClass(), args);
