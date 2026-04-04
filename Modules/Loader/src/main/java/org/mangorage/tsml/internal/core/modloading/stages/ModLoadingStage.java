@@ -209,7 +209,7 @@ public final class ModLoadingStage {
                 continue;
             }
 
-            TSMLThreads.runOnMain(() -> {
+            TSMLThreads.runAsync(() -> {
                 try {
                     // Initialize
                     TSMLLogger.getInternal().info("Initializing mod: " + id);

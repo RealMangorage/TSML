@@ -2,6 +2,7 @@ package org.mangorage.tsml.internal.core.modloading.stages;
 
 import org.mangorage.jar.api.IJar;
 import org.mangorage.jar.SpeedyJarClassLoader;
+import org.mangorage.jar.api.JarWithMetadata;
 import org.mangorage.tsml.api.TSMLLogger;
 import org.mangorage.tsml.api.logger.ILoaderLogger;
 import org.mangorage.tsml.api.mod.Environment;
@@ -39,13 +40,18 @@ public final class ModSetupStage {
         return TSMLType.LIBRARY;
     }
 
-    StageResult run(List<IJar> classpathJars, IJar triviaJar, Consumer<ILoaderLogger> loaderLoggerConsumer, Consumer<Environment> environmentConsumer) throws ClassNotFoundException, IOException {
+    StageResult run(List<JarWithMetadata> classpathJars, IJar triviaJar, Consumer<ILoaderLogger> loaderLoggerConsumer, Consumer<Environment> environmentConsumer) throws ClassNotFoundException, IOException {
+
+        classpathJars = DependencyResolver.resolve(classpathJars);
+
         List<IJar> libraryJars = classpathJars.stream()
+                .map(JarWithMetadata::getJar)
                 .filter(jar -> getType(jar) == TSMLType.LIBRARY)
                 .toList();
 
         List<IJar> modJars = new ArrayList<>(
                 classpathJars.stream()
+                        .map(JarWithMetadata::getJar)
                         .filter(jar -> getType(jar) == TSMLType.MOD)
                         .toList()
         );

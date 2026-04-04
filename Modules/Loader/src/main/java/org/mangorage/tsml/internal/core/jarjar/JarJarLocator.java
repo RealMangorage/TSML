@@ -57,7 +57,7 @@ public final class JarJarLocator implements IJarLocator {
 
                         // Also keep raw metadata as Map (for your existing system)
                         Map<String, Object> metadataMap = new HashMap<>();
-                        metadataMap.put("jarjarmetadata", gson.fromJson(jarObj, JarJarEntry.class));
+                        metadataMap.put(JarWithMetadata.JAR_JAR_METADATA_KEY, gson.fromJson(jarObj, JarJarEntry.class));
 
                         found.add(new JarWithMetadata(nested, metadataMap));
 

@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 
 public final class JarWithMetadata {
+    public static final String JAR_JAR_METADATA_KEY = "jarjarmetadata";
+
     public static List<JarWithMetadata> empty(List<IJar> foundJars) {
         return foundJars.stream()
                 .map(jar -> new JarWithMetadata(jar, null))
@@ -25,6 +27,7 @@ public final class JarWithMetadata {
 
     @SuppressWarnings("unchecked")
     public <T> T getMetadata(String key, Class<T> metadataClazz) {
-        return (T) metadata.get(key);
+        if (metadata == null || metadata.isEmpty()) return null;
+        return metadata.containsKey(key) ? (T) metadata.get(key) : null;
     }
 }
