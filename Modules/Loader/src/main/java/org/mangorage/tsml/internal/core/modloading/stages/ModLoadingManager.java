@@ -51,12 +51,11 @@ public final class ModLoadingManager {
     static void init(Path loaderJarPath, String[] args) throws Exception {
 
         final List<JarWithMetadata> discoveredJars = new CopyOnWriteArrayList<>();
-
         state = ModLoadingState.INITIAL_SETUP;
 
         final IJar triviaSpireJar = INITIAL_DISCOVERY_STAGE.run(loaderJarPath, discoveredJars, args);
-
         state = ModLoadingState.MOD_DISCOVERY;
+
         // TODO: Just stream map it, we dont need to worry about it right away!
         final ModSetupStage.StageResult initialStageResult = MOD_SETUP_STAGE.run(discoveredJars.stream().map(JarWithMetadata::getJar).toList(), triviaSpireJar, ModLoadingManager::setupLogger, ModLoadingManager::setEnvironment);
 
