@@ -16,9 +16,7 @@ public final class TSMLTriviaSpireReflectiveLogger implements ILoaderLogger {
             Method m = delegate.getMethod(methodName, paramType);
             m.invoke(null, arg); // assuming static methods
         } catch (Exception e) {
-            System.out.println(
-                    formatLog((String) arg)
-            );
+           System.out.println(arg);
         }
     }
 

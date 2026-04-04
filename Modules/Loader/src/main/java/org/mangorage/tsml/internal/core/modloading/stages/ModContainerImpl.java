@@ -1,5 +1,6 @@
 package org.mangorage.tsml.internal.core.modloading.stages;
 
+import org.mangorage.tsml.api.TSMLLogger;
 import org.mangorage.tsml.api.dependency.Dependency;
 import org.mangorage.tsml.api.mod.IModContainer;
 import org.mangorage.tsml.internal.core.modloading.ModInfo;
@@ -19,13 +20,9 @@ public final class ModContainerImpl implements IModContainer {
 
     void init() {
         try {
-            System.out.println("Attempting to call newInstance on mod class!");
             instance = modClass.getConstructor().newInstance();
         } catch (Throwable e) {
-            e.printStackTrace();
-            for (StackTraceElement stackTraceElement : e.getStackTrace()) {
-                System.out.println(stackTraceElement);
-            }
+            TSMLLogger.getInternal().error(e);
         }
     }
 

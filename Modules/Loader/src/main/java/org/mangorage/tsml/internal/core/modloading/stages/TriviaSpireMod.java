@@ -15,7 +15,7 @@ public final class TriviaSpireMod {
 
             final String[] args = mod.getProperty("args", String[].class).orElse(new String[0]);
 
-            System.out.println("Initiating TriviaSpire Itself");
+            TSMLLogger.getInternal().info("Initiating TriviaSpire Itself");
 
             init(mainClass, args);
 

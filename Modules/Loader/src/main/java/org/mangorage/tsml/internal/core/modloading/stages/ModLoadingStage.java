@@ -124,6 +124,7 @@ public final class ModLoadingStage {
             }
         });
     }
+
     public static void scanMods(String mainClass, String[] args) {
         TSMLLogger.getInternal().info("Scanning for mods...");
 
@@ -198,12 +199,8 @@ public final class ModLoadingStage {
 
         // Initialize mods in sorted order
         for (String id : sorted) {
-            System.out.println("Processing Mod (Stage 1) : " + id);
-
             IModContainer mod = modContainerMap.get(id);
             List<Dependency> deps = mod.getDependencies();
-
-            System.out.println("Processing Mod (Stage 2) : " + id);
 
             // Check that all required dependencies are present
             boolean canLoad = true;
@@ -217,10 +214,8 @@ public final class ModLoadingStage {
                 }
             }
 
-            System.out.println("Processing Mod (Stage 3) : " + id);
-
             if (!canLoad) {
-                System.out.println("Cant load: " + mod);
+                TSMLLogger.getInternal().warn("Cant load: " + mod);
                 continue;
             }
 

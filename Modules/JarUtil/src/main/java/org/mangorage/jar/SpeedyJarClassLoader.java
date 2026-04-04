@@ -41,8 +41,25 @@ public class SpeedyJarClassLoader extends SecureClassLoader {
             if (bytes == null)
                 return super.findClass(name);
 
+            final var cs = findCodeSourceForClass(path);
 
-            return defineClass(name, bytes, 0, bytes.length);
+            if (cs == null) {
+                return defineClass(
+                        name,
+                        bytes,
+                        0,
+                        bytes.length
+                );
+            } else {
+                return defineClass(
+                        name,
+                        bytes,
+                        0,
+                        bytes.length,
+                        cs
+                );
+            }
+
         } catch (IOException e) {
             return super.findClass(name);
         }
@@ -50,7 +67,7 @@ public class SpeedyJarClassLoader extends SecureClassLoader {
 
 
     @Override
-    protected Enumeration<URL> findResources(String name) throws IOException {
+    protected Enumeration<URL> findResources(String name) {
         List<URL> urls = new ArrayList<>();
         for (IJar jar : jars) {
             URL resource = jar.findResource(name);
@@ -98,7 +115,9 @@ public class SpeedyJarClassLoader extends SecureClassLoader {
                 try {
                     URL url = jar.getURL();
                     return new CodeSource(url, (Certificate[]) null);
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {
+                    ignored.printStackTrace();
+                }
             }
         }
         return null;
