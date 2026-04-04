@@ -11,21 +11,24 @@ import org.mangorage.jar.api.JarWithMetadata;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public final class JarJarLocator implements IJarLocator {
+
+    private static final String METADATA_PATH = "META-INF/jarjar/metadata.json";
+    private final Gson gson = new Gson();
 
     @Override
     public List<JarWithMetadata> locate(List<IJar> jars) {
         List<JarWithMetadata> found = new ArrayList<>();
-        Gson gson = new Gson();
 
         for (IJar jar : jars) {
             try {
-                // Check if metadata exists inside this jar
-                if (!jar.exists("META-INF/jarjar/metadata.json")) continue;
+                if (!jar.exists(METADATA_PATH)) continue;
 
-                byte[] raw = jar.readBytes("META-INF/jarjar/metadata.json");
+                byte[] raw = jar.readBytes(METADATA_PATH);
                 if (raw == null) continue;
 
                 String json = new String(raw, StandardCharsets.UTF_8);
@@ -33,35 +36,37 @@ public final class JarJarLocator implements IJarLocator {
                 if (root == null || !root.has("jars")) continue;
 
                 JsonArray jarsArray = root.getAsJsonArray("jars");
+
                 for (JsonElement elem : jarsArray) {
                     try {
                         JsonObject jarObj = elem.getAsJsonObject();
-                        String path = jarObj.has("path") ? jarObj.get("path").getAsString() : null;
-                        if (path == null || path.isEmpty()) continue;
 
-                        // Resolve the nested jar entry (path is relative inside the current jar)
-                        IJar nested = null;
+                        // Deserialize into record (typed access)
+                        JarJarEntry entry = gson.fromJson(jarObj, JarJarEntry.class);
+                        if (entry == null || entry.path() == null || entry.path().isEmpty()) continue;
+
+                        IJar nested;
                         try {
-                            nested = jar.getNestedJar(path);
+                            nested = jar.getNestedJar(entry.path());
                         } catch (IOException ioe) {
-                            // if nested jar can't be read, skip this entry
-                            System.err.println("Failed to resolve nested jar '" + path + "' in " + jar.getName() + ": " + ioe.getMessage());
+                            System.err.println("Failed to resolve nested jar '" + entry.path() + "' in " + jar.getName() + ": " + ioe.getMessage());
                             continue;
                         }
 
                         if (nested == null) continue;
 
-                        // Use the specific metadata for this jar entry (stringified JSON object)
-                        String perJarMetadata = jarObj.toString();
-                        found.add(new JarWithMetadata(nested, perJarMetadata));
+                        // Also keep raw metadata as Map (for your existing system)
+                        Map<String, Object> metadataMap = new HashMap<>();
+                        metadataMap.put("jarjarmetadata", gson.fromJson(jarObj, JarJarEntry.class));
+
+                        found.add(new JarWithMetadata(nested, metadataMap));
+
                     } catch (Throwable t) {
-                        // Skip a single malformed entry but continue processing other entries
                         System.err.println("Malformed jar entry in metadata for jar=" + jar.getName() + ": " + t.getMessage());
                     }
                 }
 
             } catch (Throwable t) {
-                // Skip this jar but continue others
                 System.err.println("Failed to process metadata for jar=" + jar.getName() + ": " + t.getMessage());
             }
         }
