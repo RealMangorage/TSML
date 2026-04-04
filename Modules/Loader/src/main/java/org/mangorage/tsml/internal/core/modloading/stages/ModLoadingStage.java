@@ -194,6 +194,8 @@ public final class ModLoadingStage {
             return;
         }
 
+        TSMLThreads.initMainThread(); // TODO: Do it better?
+
         // Initialize mods in sorted order
         for (String id : sorted) {
             System.out.println("Processing Mod (Stage 1) : " + id);
@@ -222,7 +224,7 @@ public final class ModLoadingStage {
                 continue;
             }
 
-
+            TSMLThreads.runOnMain(() -> {
                 try {
                     // Initialize
                     TSMLLogger.getInternal().info("Initializing mod: " + id);
@@ -232,7 +234,10 @@ public final class ModLoadingStage {
                     TSMLLogger.getInternal().warn("Failed to initialize mod: " + id);
                     TSMLLogger.getInternal().error(e);
                 }
+            });
         }
+
+        TSMLThreads.pumpMainQueue();
     }
 
     private static List<String> topologicalSort(Map<String, List<String>> graph) {
