@@ -8,8 +8,13 @@ import java.security.CodeSource;
 import java.security.cert.Certificate;
 import java.util.*;
 import java.net.URL;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class SpeedyJarClassLoader extends SecureClassLoader {
+
+    static {
+        ClassLoader.registerAsParallelCapable();
+    }
 
     private final List<IJar> jars;
     private final URL[] urls;
@@ -17,7 +22,7 @@ public class SpeedyJarClassLoader extends SecureClassLoader {
 
     public SpeedyJarClassLoader(List<IJar> jars, ClassLoader parent) {
         super(parent);
-        this.jars = new ArrayList<>(jars);
+        this.jars = new CopyOnWriteArrayList<>(jars);
         this.urls = jars.stream()
                 .map(IJar::getURL)
                 .toArray(URL[]::new);
