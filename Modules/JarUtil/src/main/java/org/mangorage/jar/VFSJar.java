@@ -21,7 +21,7 @@ public final class VFSJar implements IJar {
     public static IJar create(Path path) {
         try {
             FileSystemManager manager = VFS.getManager();
-            String uri = "jar:" + path.toUri().toString() + "!/";
+            String uri = "jar:" + path.toUri() + "!/";
             return new VFSJar(manager.resolveFile(uri));
         } catch (FileSystemException e) {
             throw new RuntimeException(e);
