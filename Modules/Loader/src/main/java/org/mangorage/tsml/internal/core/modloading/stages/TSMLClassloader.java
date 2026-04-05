@@ -4,8 +4,6 @@ import org.mangorage.jar.api.IJar;
 import org.mangorage.jar.SpeedyJarClassLoader;
 import org.mangorage.tsml.api.classloader.IClassTransformer;
 import org.mangorage.tsml.api.classloader.ITSMLClassloader;
-
-import java.net.URL;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -23,17 +21,10 @@ public final class TSMLClassloader extends SpeedyJarClassLoader implements ITSML
 
     void init() {
         // Auto-load transformers
-
         ServiceLoader.load(IClassTransformer.class, this)
                 .stream()
-                .forEach(provider -> {
-                    try {
-                        transformers.add(provider.get());
-                    } catch (Throwable e) {
-                        e.printStackTrace();
-                    }
-                });
-
+                .map(ServiceLoader.Provider::get)
+                .forEach(transformers::add);
     }
 
     // ------------------- ITSMLClassloader -------------------
@@ -75,13 +66,5 @@ public final class TSMLClassloader extends SpeedyJarClassLoader implements ITSML
         }
 
         return finishedClassbytes;
-    }
-
-    @Override
-    public URL[] getUrls() {
-        List<URL> urlsList = new ArrayList<>(List.of(super.getUrls()));
-        if (getParent() instanceof SpeedyJarClassLoader speedyJarClassLoader)
-            urlsList.addAll(List.of(speedyJarClassLoader.getUrls()));
-        return urlsList.toArray(URL[]::new);
     }
 }

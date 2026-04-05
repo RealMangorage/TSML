@@ -7,6 +7,7 @@ import org.apache.commons.vfs2.FileSelector;
 import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.FileType;
 import org.apache.commons.vfs2.VFS;
+import org.mangorage.jar.SpeedyJarClassLoader;
 import org.mangorage.tsml.api.TSMLLogger;
 import org.mangorage.tsml.api.classloader.ITSMLClassloader;
 import org.mangorage.tsml.api.dependency.Dependency;
@@ -133,7 +134,19 @@ public final class ModLoadingStage {
                 )
         );
 
-        final List<URL> urls = new ArrayList<>(Arrays.stream(((ITSMLClassloader) Thread.currentThread().getContextClassLoader()).getUrls()).toList());
+        final List<URL> urls = new ArrayList<>();
+        final List<SpeedyJarClassLoader> classLoaders = List.of(
+                (SpeedyJarClassLoader) Thread.currentThread().getContextClassLoader(),
+                (SpeedyJarClassLoader) Thread.currentThread().getContextClassLoader().getParent()
+        );
+
+        for (SpeedyJarClassLoader classLoader : classLoaders) {
+            urls.addAll(
+                    List.of(
+                            classLoader.getUrls()
+                    )
+            );
+        }
 
         for (URL url : urls) {
             try {
