@@ -1,6 +1,6 @@
 package org.mangorage.tsml.api.mod;
 
-import org.mangorage.tsml.api.logger.ILoaderLogger;
+import org.mangorage.tsml.api.logger.ILogger;
 import org.mangorage.tsml.internal.core.modloading.stages.ModLoadingStage;
 import org.mangorage.tsml.internal.core.modloading.stages.ModLoadingManager;
 
@@ -9,7 +9,7 @@ import java.util.Optional;
 
 public final class TSMLLoaderAPI {
 
-    public ILoaderLogger getLogger() {
+    public static ILogger getLogger() {
         return ModLoadingManager.getActiveLogger();
     }
 

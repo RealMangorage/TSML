@@ -1,6 +1,6 @@
 package org.mangorage.tsml.bootstrap.internal;
 
-import org.mangorage.tsml.bootstrap.api.logger.ILogger;
+import org.mangorage.tsml.api.logger.ILogger;
 
 import java.io.BufferedWriter;
 import java.io.IOException;

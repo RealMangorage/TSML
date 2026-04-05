@@ -4,7 +4,7 @@ import org.mangorage.jar.api.IJar;
 import org.mangorage.jar.SpeedyJarClassLoader;
 import org.mangorage.jar.api.JarWithMetadata;
 import org.mangorage.tsml.api.TSMLLogger;
-import org.mangorage.tsml.api.logger.ILoaderLogger;
+import org.mangorage.tsml.api.logger.ILogger;
 import org.mangorage.tsml.api.mod.Environment;
 import org.mangorage.tsml.api.mod.IEarlyMod;
 
@@ -40,7 +40,7 @@ public final class ModSetupStage {
         return TSMLType.LIBRARY;
     }
 
-    StageResult run(List<JarWithMetadata> classpathJars, IJar triviaJar, Consumer<ILoaderLogger> loaderLoggerConsumer, Consumer<Environment> environmentConsumer) throws ClassNotFoundException, IOException {
+    StageResult run(List<JarWithMetadata> classpathJars, IJar triviaJar, Consumer<ILogger> loaderLoggerConsumer, Consumer<Environment> environmentConsumer) throws ClassNotFoundException, IOException {
 
         classpathJars = DependencyResolver.resolve(classpathJars);
 
@@ -96,7 +96,7 @@ public final class ModSetupStage {
                         }
                     });
 
-        ServiceLoader.load(ILoaderLogger.class, tsmlClassloader).stream()
+        ServiceLoader.load(ILogger.class, tsmlClassloader).stream()
                 .limit(1)
                 .findAny()
                 .ifPresentOrElse(provider -> {

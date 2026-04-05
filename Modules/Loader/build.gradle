@@ -11,7 +11,7 @@ repositories {
 
 dependencies {
     compileOnly project(":")
-    compileOnly project(":Modules:JarUtil")
+    compileOnly project(":Modules:TSML-API")
 
     compileOnly 'org.apache.commons:commons-vfs2:2.10.0'
 

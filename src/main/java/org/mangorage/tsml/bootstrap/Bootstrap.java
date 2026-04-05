@@ -54,7 +54,7 @@ public final class Bootstrap {
             final var method = mainClass.getMethod("run", Object.class, String[].class);
             TSMLDefaultLogger.getInstance().info("Invoking TSML initPublic method...");
             TSMLDefaultLogger.getInstance().info(method.toString());
-            System.out.println("Time: " + (System.currentTimeMillis() - time));
+            TSMLDefaultLogger.getInstance().info("Time to start TSML: " + (System.currentTimeMillis() - time));
             method.invoke(null, bootstrapJarPath, (Object) args);
         } catch (Throwable e) {
             TSMLDefaultLogger.getInstance().error("Failed to start TSML:");

@@ -15,8 +15,11 @@ public abstract class RunTask extends JavaExec {
     public RunTask(RunType type) throws IOException {
         setGroup("tsml");
         setDescription("Runs the bot");
-
         setWorkingDir(getProject().file("build/run/" + type.name().toLowerCase() + "/"));
+
+        final var tasks = List.of("build");
+        setMustRunAfter(tasks);
+        setDependsOn(tasks);
 
         if (!getWorkingDir().exists()) {
             Files.createDirectories(getWorkingDir().toPath());

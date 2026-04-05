@@ -12,7 +12,9 @@ repositories {
 }
 
 dependencies {
-    compileOnly rootProject.project(":Modules:Loader")
+    compileOnly project(":Modules:Loader")
+    compileOnly project(":Modules:TSML-API")
+
     compileOnly Helper.getClient(getRootProject())
     compileOnly Helper.getServer(getRootProject())
 

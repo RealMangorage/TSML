@@ -8,18 +8,18 @@ import java.lang.reflect.InvocationTargetException;
 public final class TriviaSpireMod {
     public TriviaSpireMod() {
         TSMLLoaderAPI.getMod("trivia-spire").ifPresent(mod -> {
-            TSMLLogger.getInternal().info("Trivia Spire mod found: " + mod.getName());
-            TSMLLogger.getInternal().info("Starting TriviaSpire");
+            TSMLLogger.getLogger().info("Trivia Spire mod found: " + mod.getName());
+            TSMLLogger.getLogger().info("Starting TriviaSpire");
 
             final String mainClass = mod.getProperty("mainClass", String.class).orElseThrow(() -> new IllegalArgumentException("Trivia Spire mod is missing mainClass property"));
 
             final String[] args = mod.getProperty("args", String[].class).orElse(new String[0]);
 
-            TSMLLogger.getInternal().info("Initiating TriviaSpire Itself");
+            TSMLLogger.getLogger().info("Initiating TriviaSpire Itself");
 
             init(mainClass, args);
 
-            TSMLLogger.getInternal().info("Shutting everything down!");
+            TSMLLogger.getLogger().info("Shutting everything down!");
             TSMLThreads.shutdown();
         });
     }
@@ -30,8 +30,8 @@ public final class TriviaSpireMod {
             final var clazz = Class.forName(mainClass, false, Thread.currentThread().getContextClassLoader());
             clazz.getMethod("main", String[].class).invoke(null, (Object) args);
         } catch (ClassNotFoundException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-            TSMLLogger.getInternal().error("Something went wrong while starting Trivia Spire mod:");
-            TSMLLogger.getInternal().error(e);
+            TSMLLogger.getLogger().error("Something went wrong while starting Trivia Spire mod:");
+            TSMLLogger.getLogger().error(e);
         }
     }
 }

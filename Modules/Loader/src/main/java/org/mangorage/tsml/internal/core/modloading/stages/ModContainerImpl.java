@@ -22,7 +22,7 @@ public final class ModContainerImpl implements IModContainer {
         try {
             instance = modClass.getConstructor().newInstance();
         } catch (Throwable e) {
-            TSMLLogger.getInternal().error(e);
+            TSMLLogger.getLogger().error(e);
         }
     }
 

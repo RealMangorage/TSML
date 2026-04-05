@@ -46,7 +46,7 @@ TSMLDevConfig {
 dependencies {
     loader project(":")
 
-    shade project(":Modules:JarUtil")
+    shade project(":Modules:TSML-API")
     shade 'org.apache.commons:commons-vfs2:2.10.0'
 
     jarJarLoader(project(":Modules:Loader"))

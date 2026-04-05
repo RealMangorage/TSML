@@ -9,7 +9,9 @@ import java.security.CodeSource;
 import java.security.cert.Certificate;
 import java.util.*;
 import java.net.URL;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 public class SpeedyJarClassLoader extends SecureClassLoader {
 
@@ -19,7 +21,7 @@ public class SpeedyJarClassLoader extends SecureClassLoader {
 
     private final List<IJar> jars;
     private final URL[] urls;
-    private final Set<String> loaded = Collections.synchronizedSet(new HashSet<>());
+    private final Set<String> loaded = ConcurrentHashMap.newKeySet();
 
     public SpeedyJarClassLoader(List<IJar> jars, ClassLoader parent) {
         super(parent);
@@ -31,38 +33,39 @@ public class SpeedyJarClassLoader extends SecureClassLoader {
 
     @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException {
-        String path = name.replace('.', '/').concat(".class");
 
-        try (InputStream is = getResourceAsStream(path)) {
-            byte[] bytes = is == null ? null : is.readAllBytes();
+        synchronized (getClassLoadingLock(name)) {
 
-            // Transform the class bytes
-            bytes = maybeTransform(name, bytes);
-
-            if (bytes == null)
-                return super.findClass(name);
-
-            final var cs = findCodeSourceForClass(path);
-
-            if (cs == null) {
-                return defineClass(
-                        name,
-                        bytes,
-                        0,
-                        bytes.length
-                );
-            } else {
-                return defineClass(
-                        name,
-                        bytes,
-                        0,
-                        bytes.length,
-                        cs
-                );
+            Class<?> alreadyLoaded = findLoadedClass(name);
+            if (alreadyLoaded != null) {
+                return alreadyLoaded;
             }
 
-        } catch (IOException e) {
-            return super.findClass(name);
+            String path = name.replace('.', '/').concat(".class");
+
+            try (InputStream is = getResourceAsStream(path)) {
+                byte[] bytes = is == null ? null : is.readAllBytes();
+
+                // Transform the class bytes
+                bytes = maybeTransform(name, bytes);
+
+                if (bytes == null)
+                    return super.findClass(name);
+
+                final var cs = findCodeSourceForClass(path);
+
+                Class<?> defined;
+                if (cs == null) {
+                    defined = defineClass(name, bytes, 0, bytes.length);
+                } else {
+                    defined = defineClass(name, bytes, 0, bytes.length, cs);
+                }
+
+                loaded.add(name);
+                return defined;
+            } catch (IOException e) {
+                return super.findClass(name);
+            }
         }
     }
 
