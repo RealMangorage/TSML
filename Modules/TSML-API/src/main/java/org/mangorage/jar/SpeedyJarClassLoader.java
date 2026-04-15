@@ -2,16 +2,13 @@ package org.mangorage.jar;
 
 import org.mangorage.jar.api.IJar;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.security.SecureClassLoader;
+import java.net.URL;
 import java.security.CodeSource;
+import java.security.SecureClassLoader;
 import java.security.cert.Certificate;
 import java.util.*;
-import java.net.URL;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CopyOnWriteArraySet;
 
 public class SpeedyJarClassLoader extends SecureClassLoader {
 
@@ -26,84 +23,72 @@ public class SpeedyJarClassLoader extends SecureClassLoader {
     public SpeedyJarClassLoader(List<IJar> jars, ClassLoader parent) {
         super(parent);
         this.jars = new CopyOnWriteArrayList<>(jars);
+
         this.urls = jars.stream()
                 .map(IJar::getURL)
                 .toArray(URL[]::new);
     }
 
     @Override
-    protected Class<?> findClass(String name) throws ClassNotFoundException {
-
+    protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
         synchronized (getClassLoadingLock(name)) {
 
-            Class<?> alreadyLoaded = findLoadedClass(name);
-            if (alreadyLoaded != null) {
-                return alreadyLoaded;
-            }
+            Class<?> c = findLoadedClass(name);
+            if (c == null) {
 
-            String path = name.replace('.', '/').concat(".class");
-
-            try (InputStream is = getResourceAsStream(path)) {
-                byte[] bytes = is == null ? null : is.readAllBytes();
-
-                // Transform the class bytes
-                bytes = maybeTransform(name, bytes);
-
-                if (bytes == null)
-                    return super.findClass(name);
-
-                final var cs = findCodeSourceForClass(path);
-
-                Class<?> defined;
-                if (cs == null) {
-                    defined = defineClass(name, bytes, 0, bytes.length);
+                // Always protect JDK
+                if (isSystemClass(name)) {
+                    c = getParent().loadClass(name);
                 } else {
-                    defined = defineClass(name, bytes, 0, bytes.length, cs);
+                    try {
+                        c = findClass(name);
+                    } catch (ClassNotFoundException e) {
+                        c = getParent().loadClass(name);
+                    }
                 }
-
-                loaded.add(name);
-                return defined;
-            } catch (IOException e) {
-                return super.findClass(name);
             }
-        }
-    }
 
-
-    @Override
-    protected Enumeration<URL> findResources(String name) {
-        List<URL> urls = new ArrayList<>();
-        for (IJar jar : jars) {
-            URL resource = jar.findResource(name);
-            if (resource != null) {
-                urls.add(resource);
+            if (resolve) {
+                resolveClass(c);
             }
+
+            return c;
         }
-        return Collections.enumeration(urls);
     }
 
+    /**
+     * 🔥 CLASS DEFINITION
+     */
     @Override
-    protected URL findResource(String name) {
-        for (IJar jar : jars) {
-            final var resource = jar.findResource(name);
-            if (resource != null)
-                return resource;
+    protected Class<?> findClass(String name) throws ClassNotFoundException {
+        synchronized (getClassLoadingLock(name)) {
+            byte[] bytes = getClassBytes(name);
+
+            // TSML HOOK (UNCHANGED CONCEPT)
+            bytes = maybeTransform(name, bytes);
+
+            if (bytes == null) {
+                throw new ClassNotFoundException(name);
+            }
+
+            String path = name.replace('.', '/') + ".class";
+            CodeSource cs = findCodeSource(path);
+
+            Class<?> defined = (cs != null)
+                    ? defineClass(name, bytes, 0, bytes.length, cs)
+                    : defineClass(name, bytes, 0, bytes.length);
+
+            loaded.add(name);
+            return defined;
         }
-        return null;
     }
 
-    /** Override this to apply class transformations */
-    protected byte[] maybeTransform(String name, byte[] original) {
-        return original;
-    }
 
-    /** Load class bytes directly from the IJars */
     public byte[] getClassBytes(String name) {
         String path = name.replace('.', '/') + ".class";
         return getResourceBytes(path);
     }
 
-    /** Load resource bytes from the IJars */
     protected byte[] getResourceBytes(String path) {
         for (IJar jar : jars) {
             byte[] data = jar.readBytes(path);
@@ -112,32 +97,56 @@ public class SpeedyJarClassLoader extends SecureClassLoader {
         return null;
     }
 
-    /** Find a CodeSource URL from the first JAR that contains this class */
-    private CodeSource findCodeSourceForClass(String path) {
+    protected byte[] maybeTransform(String name, byte[] original) {
+        return original;
+    }
+
+    @Override
+    protected URL findResource(String name) {
+        for (IJar jar : jars) {
+            URL url = jar.findResource(name);
+            if (url != null) return url;
+        }
+        return null;
+    }
+
+    @Override
+    protected Enumeration<URL> findResources(String name) {
+        List<URL> out = new ArrayList<>();
+        for (IJar jar : jars) {
+            URL url = jar.findResource(name);
+            if (url != null) out.add(url);
+        }
+        return Collections.enumeration(out);
+    }
+
+    private CodeSource findCodeSource(String path) {
         for (IJar jar : jars) {
             if (jar.exists(path)) {
                 try {
-                    URL url = jar.getURL();
-                    return new CodeSource(url, (Certificate[]) null);
-                } catch (Exception ignored) {
-                    ignored.printStackTrace();
-                }
+                    return new CodeSource(jar.getURL(), (Certificate[]) null);
+                } catch (Exception ignored) {}
             }
         }
         return null;
     }
 
-    /** List of loaded classes */
-    protected Set<String> getLoaded() {
-        return Collections.unmodifiableSet(loaded);
-    }
-
-    /** Access to the IJars */
-    public List<IJar> getJars() {
-        return Collections.unmodifiableList(jars);
+    protected boolean isSystemClass(String name) {
+        return name.startsWith("java.")
+                || name.startsWith("javax.")
+                || name.startsWith("sun.")
+                || name.startsWith("jdk.");
     }
 
     public URL[] getUrls() {
         return urls;
+    }
+
+    public List<IJar> getJars() {
+        return Collections.unmodifiableList(jars);
+    }
+
+    protected Set<String> getLoaded() {
+        return Collections.unmodifiableSet(loaded);
     }
 }
